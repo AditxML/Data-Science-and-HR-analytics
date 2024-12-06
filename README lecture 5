@@ -1,0 +1,46 @@
+Learnt how to load in MASS package 
+Learnt how to load in datasets like fgl from MASS package and how to use data() function to tell R that this is a dataset
+Learnt how to get multiple boxplots on one plot by splitting by a categorical variable like glass type eg. plot(RI ~ type, data=fgl, col=c(grey(.2),2:6), las=2)
+Learnt how to use scale function to standardize all columns of a dataset
+Learnt how to use apply() function to get standard deviations of all columns 
+Experimented by changing 2 to 1 in apply(x,2,sd) to realize that 1 corresponds to rows and gets standard deviation of all rows and 2 corresponds to columns
+Learnt how to run KNN algorithm
+Learnt how to create a dataframe using data.frame() function with arguments being different column vectors of values
+Added code to create a nearest10 and nearest20 algorithm as well to note that at times nearest10 and nearest20 algorithms give different answers and this taught me that a test 
+set size of 10 doesn't mean using the distance of one test observation from the other 9 to classify this test observation but the distances from the test observation and the 
+204 training observations (as expected)
+Removed source("naref.R") below library(gamlr) cos naref already part of gamlr package which is loaded in and R didn't recognize source("naref.R"), but got correct output for 
+the sparse model matrix after removing it 
+Learnt that .^2 eg. in credx <- sparse.model.matrix(Default ~ . ^ 2, data=naref(credit)) sets independent variables to be all columns in data along with all pairwise interaction 
+effects and squared variables
+Learnt how to plot regularization path of coefficient values from cross validation against changing regularization/ log lambda using plot(credscore$gamlr) and how to plot cross
+validation errors on lambda values to spot error minimizing lambda visually using plot(credscore) where credscore is the object holding the results of the gamlr packages cross
+validation algorithm 
+Learnt how to use sum function for counting elements in a list/vector satisying some condition like nonzero elements eg. sum(coef(credscore, s="min")!=0)
+Learnt that optimal regularization parameter/ lambda can be selected based on minimum binomial deviance, minimum AICc, minimum AIC etc. and that these can lead to different results
+Learnt how to use the drop function to eliminate the dimensions of an object that are unnecessary like removing sparse matrix formatting 
+Learnt how to construct an ROC curve for a classification model 
+Changed ROC code to using pROC package because source("roc.R") wasn't working so I also learnt how to use this pROC package and it's existing ROC functions
+For LASSO penalized multiple regression example I had to download glmnet because wasn't loaded: install.packages("glmnet")
+Learnt that you can also interact all variables with one specific variable eg. using .*RI from glass type example
+Learnt that in cv.glmnet when you set family to multinomial, it tells R that there are multiple values in the class variable now
+Experimented by changing model specification for glassfit multinomial CV regression algorithm to . alone to see very similar plot(glassfit) as for .*RI, and then to .*Na to 
+see quite different plot(glassfit) and optimal lambdas as for .*RI and finally to .*Ba to see quite different plot(glassfit) but quite similar optimal lambdas as for .*RI
+highlighting that both optimal lambdas and their plot of multinomial deviance on lambdas value are quite sensitive to model speicification
+Experimented with changing the covariate (Mg) or the glass types(WinNF - WinF) for the code interpreting multinomial logit coefficients : changed Mg to Al to note that Al has
+a much stronger scaling on odds of nonfloat glass over float glass specifically 1 unit increase in Al increases odds of nonfloat glass over float glass by 8.22 
+Also changed WinF to Veh to note that Mg has weaker scaling effect in odds of nonfloat glass relative to vehicle window glass specifically increases odds of nonfloat relative
+to vehicle window by 0.09 per unit increase in Mg as 0.42 (up from total dataset value of 0.36) but considering some of the other changes seen eg. when using Al this value was 
+-8.22, this change is not very large and so this result is not highly dependent on the exact subsample of this dataset/ dataset in general (so long as good and large dataset)
+Also to see sensitivity of initial Mg and nonfloat vs float scaling factor of odds result to subset of data, I create a subset of data by randomly sampling half from the total
+dataset, fitting the cv.glmnet model to this new subsample dataset and then getting 1 - exp(DeltaBMg_subset) in the end as 
+Learnt how to run multinomial logistic regression in R for when your response variable has multiple classes (categorical but not binary response variable) 
+Learnt how to get predicted probabilities for a model like multinomial logistic regression for each class value using predict() function, type="response" to select predicted
+probabilities and appropriate arguments for the predict function
+Learnt how to convert 3D matrix into 2D array using drop() function
+Learnt how to use cbind() function appropriately to get predicted probabilities for the TRUE class value/ glass type for each observation
+Learnt how plot() function can also be used to do boxplots of true class probabilities for EACH class value using ~ classname in plot() function
+
+
+
+
