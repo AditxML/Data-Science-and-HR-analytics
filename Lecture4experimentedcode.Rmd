@@ -838,6 +838,11 @@ $AIC_c = deviance + 2df \frac{n}{n-df-1}$.
 
 Like cross-validation experiments above, $AIC_c$ targets well the Out-of-Sample deviance: what the deviance would be on an independent sample of size $n$. $AIC_c$ can then be used as a substitute or in tandem with $CV-min$ we obtained from the experiments above. One advantage is that it is faster. 
 
+install.packages("AICcmodavg")
+library(AICcmodavg)
+head(AICc(spender))
+
+print(aicc_value)
 ---
 
 # References
