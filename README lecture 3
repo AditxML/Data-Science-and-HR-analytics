@@ -1,0 +1,20 @@
+Downloaded the Rmarkdown file for lecture 3 with Professor Kapoor's code
+Downloaded OJ file and changed filepath in Rmarkdown file to correct one from my laptoop
+Learnt how to run log-log OLS regressions in R
+Learnt how to create a design matrix for a regression model to inspect what R does with categorical variables using the modelname.matrix() function
+Learnt how to use the relevel() function to create a new variable with a different reference level/ base group
+Experimented using the relevel() function by creating a different brand variable (mybrand2) with minute.maid as the base group this time
+Learnt how to get interaction effects of variables in a regression using * operator
+Ran less restrictive trip interaction regression model with mybrand and my newly created mybrand2 alternatives to see difference - interesting to note that even 
+coefficients on variables without mybrand or mybrand two in it changed eg. log(price)
+Changed the filepath for the spam email dataset for the Logistic regression part to being the correct on from my laptop
+Added code to observe first and last few rows in email dataset
+Added round(summary(spammy$coef), 3) to observe summary statistics for logistic regression coefficients
+Learnt how to use exponential function exp()
+Added: coef(spammy)["word_meeting"]; exp(coef(spammy)["word_meeting"]); 1/exp(coef(spammy)["word_meeting"]) to note that spam odds decrease by a factor of 12 if an email contains the word 'meeting'
+Altered code to see output if change c(1:5) and type='link' (for log odds instead of predicted probabilties) in predict(spammy, newdata = email[c(1,4000),], type="response")
+Added code to run spammy on first half of dataset and then second half and then get R-squared for both variants and noted that on first half it explained 82% of variation in spam 
+occurence but interesting to note that in second half the glm algorithm for the Logistic Regression did not fit and gave a negative infinity R-squared because null deviance was 0 
+possibly because the spam values in second half were all the same so null deviance was computed as 0 since average spam value same as all spam values in second half
+Does seem like my above hypothesis is correct because when I run head(email_half[,"spam"]); tail(email_half[,"spam"]); head(email_half2[,"spam"]); tail(email_half2[,"spam"])
+it looks like the 1s are placed 1st in the email dataset and then the 0s
