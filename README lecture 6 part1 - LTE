@@ -1,0 +1,27 @@
+Downloaded lecture 6 part1 Rmarkdown file with Professor Kapoor's code
+Loaded in oj csv using correct file path from my laptop
+Learnt that can use lm (and also glm of course) to fit regression model when want it to be linear and when have a continuous dependent variable eg. pricereg <- lm(log(sales) ~ 
+brand, data=oj)
+Learnt how to code the partialling out effect of controls on main variable of interest in a multivariate regression setting 
+Learnt how to use read.table() function to load .dat files into R
+Learnt how to use operator !, function c() and operator %in% to remove specific rows satisfying a certain condition from dataframe eg. data <- data[!(data$state %in% c(2,9,12)),]
+Learnt that can fit glm model, assign it to a variable and output the summary of it's coefficients all in one line of code eg. summary(orig <- glm(y ~ d + t + s +., data=controls))$coef['d',]
+Learnt how to add a legend to a plot using the legend() function eg. ("topleft", fill=c(2,4), legend=c("abortions","cellphones"), bty="n")
+Added summary(interact)$coef[,] to code and this taught me that in for eg. glm(y ~ d + t + phone*s + .^2, data=controls), y, d, t, phone and s can be from a different dataframe (so long as it's already defined and of correct length) than the controls 
+dataframe, which is only so for the .^2 so the .^2 also only applies to the columns in controls 
+Learnt that can also use cbind() function to combine a vector with a design matrix into a sigle matrix eg. cbind(d,x) combines vector d with design matrix x 
+Learnt that when fitting lasso regression using cross validation, can also specify strength of penalization using lmr argument of cv.gamlr() function eg. cv.gamlr(x,d, lmr=1e-3)
+and that higher values for lmr mean stronger regularization/penalty
+Added code to check the sensitivity of dhat/predicted values and the d and dhat based in sample R2 by adjusting regularization penalty lmr from 1e-3 to 1e-4 which gave a 
+marginally larger. This makes sense as 1e-3 is already quite a low penalty and because reducing the penalty should mean more able to fit data better in sample atleast so 
+higher IS R2
+Similarly from adjusting lmr from 1e-3 to 1e-2 and then to 1e-1 I noticed that the IS R2 dropped further and further for same reasons as above
+Learnt that you can use argument free from gamlr and cv.gamlr to not penalize a specific variable under lasso regularization eg. here dhat isn't penalized so will be in final
+model : cv.gamlr(cbind(d,dhat,x),y,free=2,lmr=1e-3)
+Learnt that can also free more than one variable from penalization like so : free=1:(ncol(config)+ncol(team))                                                                                                                              
+Learnt how to use which() function to select specific values from a list following a certain condition eg. which(coef(nhlprereg)[-1,] != 0)
+Learnt how to run sample splitting algorithm in R to get standard errors when running LTE lasso regressions                                                                                                                               
+Experimented by adding code where I changed the nhlprereg model in the sample splitting example specifically by setting standardize to TRUE in the model fitted on the first fold of data and this
+resulted in a larger standard error and wider confidence interval in the predicted probabilities from the model fitted on second fold that uses nonzero coefficient variables
+from first fold model. This may be because standardizing the data was inappropriate for some variables and so when I did that it led to poor choice of coefficients/variables
+to include in the second model resulting in higher standard errors of predicted probabilities and thus a wider confidence interval                                                                                                                                                                                    
