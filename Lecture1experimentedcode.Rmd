@@ -1,0 +1,558 @@
+---
+title: "FEM11213 - Data Science and HR Analytics"
+subtitle: "01 - Introduction"
+author: "Sacha Kapoor"
+date: "28 October 2024 (updated: `r Sys.Date()`)"
+output:
+  xaringan::moon_reader:
+    css: [default, "style/middlebury.css", "style/middlebury-fonts.css"]
+    lib_dir: libs
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+      ratio: "16:9"
+
+---
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+
+knitr::opts_chunk$set(eval = TRUE,
+               echo = TRUE,
+               warning = FALSE,
+               message = FALSE,
+               cache = FALSE)
+
+htmltools::tagList(rmarkdown::html_dependency_font_awesome())
+```
+
+```{r plots_and_figures, include=FALSE}
+library(ggplot2)
+library(kableExtra)
+
+theme_set(theme_gray(15))
+```
+
+```{r, references, echo=FALSE, cache=FALSE}
+library(RefManageR)
+BibOptions(check.entries = FALSE, 
+           bib.style = "numeric", 
+           cite.style = "authoryear", 
+           style = "markdown",
+           hyperlink = FALSE, 
+           dashed = FALSE)
+bib <- ReadBib("../refs/references.bib", check = FALSE)
+```
+
+class: title-slide-section-gray
+
+# Motivation
+
+  * Big Data (BD) and Machine Learning (ML) have disrupted decision making within organizations, especially big business and government 
+  
+  * Traditionally: 
+      + no data driven decision making or 
+      + army of fresh business analysts analyzing excel spreadsheets by hand 
+      
+  * Now: 
+      + Can dive into fine detail of all operations: 
+      + revenue generation via analyses of customer behavior and pricing and 
+      + cost minimization via analyses of input allocations (capital, labor, etc.). 
+      
+  * BD, ML tools, and people like YOU can improve decision making at these organizations:
+      + Machine learners handle automation and scale
+      + Statisticians remind us to keep track of uncertainty. 
+      + Economists bring tools like causal modeling and, importantly, a structured understanding of human behavior.    
+
+---
+
+# Motivation
+
+  * Course is still new and developing. Intention is to: 
+      + be a starting point for becoming a data scientist at a modern large business or government organization; 
+      + put you at intersection of  ML (automation and scale) and statistics (inference) while leveraging your training in economics (causal and structural modelling); 
+      + give you a feel for the potential relevance for decision making in all sorts of organizations (government, businesses, etc.); 
+      + especially but not exclusively for economic decisions relating to human resource (HR) management.
+      
+  * This is not a course for statisticians. It is course for economists. 
+      + Economists care a lot about providing evidence that explains why things are the way they are. 
+      + Economic thinking is valuable for identifying and understanding deeper organizational problems. 
+      + This involves a greater focus on causation over correlation (or at least moving towards causation)
+      
+---
+
+
+
+# Actual course description
+
+
+FEM11213-24 has two primary objectives. The first is to introduce students to Machine Learning (ML) in economic analysis. The second objective is to learn how ML can be applied to improve decision making by businesses and organizations more generally. The focus will be on decisions relating to human resources, but other organizational decisions will be considered as well. Upon completion of this course students will be able to:
+
+  * demonstrate programming skills suitable for handling big data and conducting applied ML research more generally
+  * identify empirical settings where ML is more appropriate or complementary to causal effect modelling in econometrics
+  * apply common ML methods for the purposes of selecting a suitable econometric model, making out of sample predictions, and classifying objects
+  * apply ML methods to estimate treatment effects for policy evaluation
+  * apply ML methods to address policy and business decision questions
+
+---
+
+# Topics
+
+| Order                  | Topic                                      |
+|:----------------------|:-------------------------------------------|
+| [**1**](#topic-1)      | Introduction     |
+| [**2**](#topic-2)      | Uncertainty      |
+| [**3**](#topic-3)      | Regression       |
+| [**4**](#topic-4)      | Regularization   |
+| [**5**](#topic-5)      | Classification   | 
+| [**6**](#topic-6)      | Controls         |
+| [**7**](#topic-7)      | HR Application   |
+
+Some topics will be covered in the same week. A separate topic on Factorization will be for self learning. 
+
+---
+
+# Readings (required)
+
+  1. **Business Data Science: Combining Machine Learning and Economics to Optimize, Automate, and Accelerate Business Decisions, by M. Taddy. New York: McGraw-Hill Education, 2019.** 
+  	* Can find an ebook version at the university library website. 
+    *	Otherwise can purchase online. 
+    * will draw heavily on this book and the R code therein. 
+    
+  2. **CEO Behavior and Firm Performance, by O. Bandiera, A. Prat, S. Hansen, et al. In: Journal of Political Economy 128.4, pp. 1325-1369, 2020.**	
+
+  3. **Hiring as Exploration, by D. Li, L. Raymond, P. Bergman. Working Paper, 2021.** \url{https://danielle-li.github.io/assets/docs/HiringAsExploration.pdf}
+
+  4. **Discretion in Hiring, by M. Hoffman, L. Kahn, D. Li. Quarterly Journal of Economics, Volume 133, Issue 2, Pages 765–800, May 2018.**	
+
+---
+
+# Readings (recommended)
+
+  5. The impact of machine learning on economics, by S. Athey. In The Economics of Artificial Intelligence: An Agenda. University of Chicago Press, 2018. 
+	  * Also published in NBER working paper series. 
+
+  6. Machine learning: an applied econometric approach, by S. Mullainathan and J. Speiss. Journal of Economic Perspectives, 31(2), 87-106, 2017.  
+
+  7. Controlling the False Discovery Rate: A Practical and Powerful Approach to Multiple Testing, by Y. Benjamini and Y. Hochberg. In: Journal of the Royal Statistical Society. Series B (Methodological) 57.1, pp. 289-300, 1995.
+
+  8. What can machine learning do? Workforce implications, by E. Brynjolfsson and T. Mitchell. In: Science 358.6370, pp. 1530-1534, 2017.
+
+  9. Notes for Predictive Modeling, by E. García-Portugués. Version 5.9.12. ISBN 978-84-09-29679-8. 2023. URL: https://bookdown.org/egarpor/PM-UC3M/.
+
+---
+
+# Prerequisites
+
+  1. Applied econometrics (FEM11090) or equivalent.
+  2. Experience with a programming language (Stata or Python or R e.g.).
+  3. A desire to learn. Willingness to learn how to self learn. 
+
+---
+
+# Programming
+
+We will use Rstudio and Github in this course. Part of the objective here will be learn Rstudio and Github. Your first homework will be to: 
+
+<i class="fas fa-check-square"></i> Download and install [Git](https://git-scm.com/downloads).  
+
+<i class="fas fa-check-square"></i> Download and install [R and RStudio](https://posit.co/download/rstudio-desktop/).  
+
+<i class="fas fa-check-square"></i> Create an account on [GitHub](http://github.com/)
+
+<i class="fas fa-check-square"></i> Download and install [GitHub Desktop](https://desktop.github.com/).
+
+[Posit Cloud](https://posit.cloud/) lets you use RStudio in the cloud. It is meant to be easier for R and Python novices to learn data science and machine learning using R and Python.
+
+Posit has some primers that you familiarize yourself with the language: [Posit Primers](https://posit.cloud/learn/primers). 
+
+Another useful source is [Introduction to Econometrics with R (Hanck, Arnold, Gerber, and Schmelzer)](https://www.econometrics-with-r.org/index.html). 
+
+You can use ChatGPT or equivalent in this course. In fact, I encourage it. 
+
+---
+
+# Course materials 
+
+Materials can be found at this GitHub repository: [https://github.com/SachaKapoor/FEM11213](https://github.com/SachaKapoor/FEM11213)
+
+```{r, echo=FALSE, out.width = "70%", fig.align='center'}
+
+knitr::include_graphics("figs/Repository.png")
+
+```
+
+and on Canvas. 
+
+---
+
+# Evaluation
+
+3 parts: 
+
+  1. **Github Repository is 20%.** Done individually.
+  2. **Replication is 30%**. Done in groups.
+  3. **Final Exam: 50%**
+
+---
+
+# Evaluation (1. Github Repository is 20%)
+
+Done individually.
+
+  * Set up folders for each week of the course.
+
+  * Each folder should contain evidence that you have been practicing the material.
+
+  * Each folder should have a README file that outlines what you did. For example,
+    + Made an Rmarkdown file with prof Kapoor's code
+    + Altered code in such in such a way		
+
+  * Learned that this function or modifier does X. 
+
+  * These are easy points.
+
+---
+
+# Evaluation (2. Replication is 30%)
+
+Done in groups.
+
+  * 4 to 5 students per group. You pick your group. After picking your group, register it on Canvas (go to **People/Replication Groups**). 
+
+  * You will replicate the ML exercise in a paper I give you.
+
+  * You will download their code and convert it to R. You can use ChatGPT to convert it to R.
+
+  * You will make one meaningful extension
+
+  * You will describe everything in a 7 page report (excluding tables).
+
+  * You will present your extension on the last day of class (Presentation times will depend on class size).
+
+  * You will hand the report thereafter.
+
+  * Presentation grade is 5%. Report is 25 %.
+
+---
+
+# Evaluation (3. Final Exam is 50%)
+
+  Details to follow.
+  
+---
+
+# Schedule and important dates
+
+  * Mon Oct 28  - Intro + Methods Lecture
+  * Mon Nov 4  - Methods Lecture 
+  * Mon Nov 11 - Methods Lecture
+  * Mon Nov 18 - Methods Lecture
+  * Mon Nov 25 - Methods Lecture + HR Application 
+  * Mon Dec 2  - Guest Lecture
+  * Mon Dec 9 - Assignment Presentations + Exam Review
+  * Fri Dec 13 - Hand in Assignment 
+  * Fri Dec 20 - Final Exam
+
+---
+
+
+# Feedback
+
+
+Second year for this course (and for me). Please feel free to give honest and direct feedback. I would like to improve this course. You can email comments to me, tell me directly, or wait for the course evaluations. If it helps, I have VERY thick skin. Either way, I appreciate concrete examples where improvement can be had. 
+
+---
+class: title-slide-section-blue, center, middle
+name: BD_ML_Comp
+
+
+#Big Data (BD), Machine Learning (ML), and Computation
+
+
+---
+# What is Big Data (BD)?
+
+Can refer to **volume** or **complexity**
+
+  * volume: 
+      + too big for one computer or available memory
+      + split data over several computers, run computations on each, then combine. 
+      + bigness defined by sample size $n$ or rows of data.  
+
+  * complexity: 
+      + "too much" information, often unstructured 
+      + data dimension is growing 
+      + bigness defined by number of variables $p$ or columns of data. 
+
+Contrast with typical economists/statisticians view of data? 
+  * Typically assume $p$ is fixed. See what we can learn as $n$ increases. But with BD we have a $p(n)$ that is increasing in $n$. 
+  * Traditional tools of data visualization and diagnostics (hypothesis testing) may be less applicable in case of BD. 
+
+---
+# What is Machine Learning (ML)?
+
+ML is study of algorithms that can be applied to data and used for tasks such as prediction and classification. 
+
+2 main branches: 
+  1. Unsupervised ML  
+      + "unsupervised" because input data is unstructured (with no labels) 
+      + ML groups input data on basis of similarity 
+      + or reduces dimensionality.  
+      + Examples of algorithms: principal component analysis (PCA), $k$-means clustering, Latent Dirichlet Allocation (LDA) 
+      + Applications: image recognition, cluster analysis, topic modelling
+      
+  2. Supervised ML 
+      + typically use set of features or covariates $X$ to predict an outcome $Y$  
+      + Estimate $\mu(x) = \mathbb{E}[Y|X=x]$ using a training sample where $Y$ and $X$ are observed   
+      + Use $\hat{\mu}(x)$ to predict true value of $Y$ in an independent sample on basis of observed $X$. 
+      + Algorithms draw heavily on regression-based methods: linear and logistic regression, neural networks, random forests, etc.  
+      + Applications: sentiment analysis (good/bad reviews), loan default, fraud detection, etc. 
+
+In applied econometrics we chase the true $\mu(x)$, i.e. causal identification of $\mu(x)$ or a part of $\mu(x)$. With ML the truth takes a back seat: goal is maximizing predictive performance. 
+
+---
+# Why Study ML?
+
+From a practical standpoint, 
+
+  1. Can help individuals and organizations make better decisions
+  2. Can help customers make better decisions, e.g. via recommendations or personalized marketing campaigns or product customization.  
+  3. Can do things at scale. 
+  4. Fraud detection. 
+  5. ML can solve problems that humans have no idea how to solve by hand. 
+      * Just feed it examples. 
+      * From examples, task can be solved.  
+      
+---
+# Why Study ML?
+
+From an academic standpoint, ML has changed how we approach problems. 
+  * Traditional for economists (and mathematicians) to make assertions or conjectures and then try to prove or disprove them using logic. 
+  * With ML we make observations about the real world
+      + e.g. try to group these observations or predict their occurrence in independent samples 
+      + using artificial experiments and our knowledge of statistics 
+      + From this perspective, easy to see why there is room for practical people in this field  
+
+---
+
+# What are the implications of ML for the workforce? `r Citet(bib, "BrynjolfssonEtAl17")`
+
+Useful to distinguish between pre-ML IT and ML IT. 
+
+Pre-ML IT has facilitated automation of routine tasks that are highly structured and repetitive (think about mailings in MS Word). 
+  * Decreased labor demand for middling skills (factory workers e.g.)
+  * Not for low skill (housekeeping) or high skill jobs (physicians)
+  * Explanation for disappearing middle and ultimately polarization
+  
+ML facilitates automation of non-routine tasks (like physician diagnoses). 
+  * ML can reveal data regularities and point to strategies that may be difficult for humans to identify and articulate.  
+  
+---
+
+# Workforce implications of ML
+
+Distinction between routine and non-routine tasks may no longer be the right frame for thinking about the effects of ML/automation. 
+  * ML may outperform physicians at diagnostics
+  * ML is not suited to complex discussions with other physicians, or with the emotional intelligence that is need to communicate with patients.
+
+Even this diagnostic/emotional frame may not be quite right
+  * Algorithms trained on transcripts between salespersons and customers can be trained to detect triggers that anger customers 
+  * More recent algorithms trained on videos where facial expressions are informative about emotions of customers 
+
+Further to last point, unlike older computer paradigm, ML can potentially do creative tasks. 
+  * Solution search capacity far exceeds that of humans. Might facilitate identification of "new" or "creative" solutions. 
+  * Works if the desired solution is clear and well specified 
+  * Suggests an increased role for scientists, entrepreneurs, or anyone who can envision, articulate, and define goals clearly. 
+  
+
+---
+
+# Workforce implications of ML
+
+Which tasks are suitable for ML? Some key criteria for assessing suitability 
+
+  1. Learning a function that maps well-defined inputs to well-defined outputs
+    + e.g. labelling medical records on basis of likelihood of cancer (classification)
+    + e.g. predicting future loan defaults on basis of loan application
+  
+  2. Availability of big data with input-output pairs 
+  
+  3. No need for detailed explanation of HOW a decision was made
+    + decisions in ML are based on numerical weights 
+    + articulating reasons for weights can be tricky 
+  
+  4. There is room for error 
+  
+  5. No specialized dexterity, physical skills, or mobility required 
+
+---
+
+# Economic factors determining workforce implications
+
+  1. Elasticity of substitution between task and ML
+    + ML can replace highly substitutable tasks
+    + ML can increase demand for highly complementary inputs (like people who can do data science)
+    + over long run, should increase the supply of people who can do this
+  
+  2. Inertia in organizations 
+    + Lots of evidence of organizations doing what works (if ain't broke, why fix it?) 
+    + But lots of organizations are also constantly tinkering with their business processes. 
+      - Their propensity to do this will influence the adoption of ML more broadly. 
+      - Product market competition may help with this. 
+
+---
+
+# Computation
+
+A key learning objective in this course is learning/developing skills at writing and reading computer code which is relevant for data analysis. You are not expected to become a software engineer. 
+
+You are expected to be able to read and write high level SCRIPTED code. We use R because it is 
+
+  * an open-source high-level language
+  * built for statistical analysis 
+  * relatively forgiving for a novice programmer
+  * used widely in government, academia, and the private sector
+  
+There will be a lot of self-learning here. There are many online resources out there. You should consult them. You also have the notes for the course via Github. 
+---
+# Computation
+
+R is a great tool. Not a panacea. No software is. 
+
+  * Python is better with data scraping and unstructured data like raw text. 
+  * Gluon and Keras are better for large-scale ML. 
+  * many other examples. 
+  
+You will have to adapt to the company or preferred software of others. It is good practice to learn to write and read code in one language really well while being flexible and willing to adapt to others. 
+
+---
+# Computation
+
+Economists generally work with flat files. Flat files have 2 dimensions: rows and column. We will do the same. 
+
+Be aware that flat files are often not the preferred method for storing and managing data. Large organizations will have structured and unstructured data: 
+  1. Structured data 
+      + Variables well-defined 
+      + Stored in relational database
+      + Flat files can be extracted using Structured Query Language (SQL)
+      
+  2. Unstructured data
+      + Variables are not well-defined (Whatsapp messages)
+      + Stored over a network of machines, a distributed file system (DFS)
+      
+R can pull data from both types of systems. Should you spend your time on this? I would say no. Ask your software/data engineers to pull the desired data for you, in the format you want. 
+
+---
+# Computation
+
+To read flat files you can use the read.csv command in R:  
+
+```{r}
+CEO_Diary <- read.csv("C:/Users/aditc/OneDrive/Documents/survey_response_data.csv")
+```
+
+and then 
+
+```{r}
+View(CEO_Diary)
+```
+
+to see a dataset of time diaries for CEOS:
+
+```{r, echo=FALSE, out.width = "80%", out.height= "60%", fig.align='center'}
+
+library(knitr)        # for including graphics
+include_graphics("figs/ViewCEODiary.png")
+
+```
+Data found at: https://www-journals-uchicago-edu.eur.idm.oclc.org/doi/suppl/10.1086/705331, supplementary materials for the paper "CEO Behavior and Firm Performance" by `r Citet(bib, "BandieraEtAl20")`.  
+
+---
+# Computation
+
+CEO_Diary is called a dataframe. To subset the data you can use 
+
+```{r}
+CEO_Diary[1:15,c(1:5,10:12, 39, 39)] 
+```
+
+---
+
+# Computation
+
+To find out the "class" of a variable, you can use the apply function  
+```{r}
+apply(CEO_Diary,2,class)
+```
+All variables are "character" objects. Will need to convert some to "numeric" or "integer" objects for statistical analysis. 
+
+---
+
+# Computation
+
+R is "high level" because there are MANY well-designed built-in functions that can be applied to data:   
+```{r}
+nrow(CEO_Diary)
+ncol(CEO_Diary)
+nrow[CEO_Diary]
+```
+
+```{r}
+summary(CEO_Diary[1:5])
+```
+
+---
+
+# Computation
+
+Graphical analysis is a strength of R.
+```{r}
+  png(file="figs/CEOTypes.png", width=800, height=300)
+  par(mar=c(9, 3 ,1,1))
+  barplot(prop.table(table(CEO_Diary$type)), las=2)
+  dev.off()
+```
+to produce 
+
+```{r, echo=FALSE, out.width="50%"}
+  knitr::include_graphics("figs/CEOTypes.png")
+```
+
+
+---
+
+# Computation
+
+What does "barplot(prop.table(table(CEO_Diary$type)), las=2)" do? How can you do coding experiments to learn what this function does? - answer in my README
+
+Go to console and run: 
+
+CEO_Diary <- read.csv("Data/survey_response_data.csv");
+
+barplot(prop.table(table(CEO_Diary$type)));
+
+table(CEO_Diary$type);
+
+prop.table(table(CEO_Diary$type));
+
+
+---
+
+# Computation
+
+Can fit statistical models. For example, can fit regression of Strategy (=1 if meeting about strategy) on 
+```{r}
+fit <- glm(strategy ~ consultants + politicians, data=CEO_Diary, family = binomial); summary(fit)
+```
+
+---
+
+# References
+
+```{r, 'refs1', results='asis', echo=FALSE, eval=TRUE}
+PrintBibliography(bib, start = 1, end = 6)
+```
+
+
