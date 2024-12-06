@@ -28,3 +28,4 @@ Learnt how to use coef() function on more abstract models like cv.spender and ho
 In getting lambdas for each website, changed select = "min" to select ="1se" which gives simplest model with cross-validation error within one standard error of its lowest possible value
 and could immediately see that lot less nonzero betas for 1se variant, as expected
 Learnt how to use AIC function to get AIC values of a model like AIC(spender) gives AIC of different iterations of K-fold CV LASSO algorithm 
+Installed AICcmodavg package and loaded it in to get head(AICc(spender)) to compare with head(AIC(spender))
