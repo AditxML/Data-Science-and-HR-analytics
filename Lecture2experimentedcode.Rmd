@@ -1,0 +1,645 @@
+---
+title: "FEM11213 - Data Science and HR Analytics"
+subtitle: "02 - Uncertainty"
+author: "Sacha Kapoor"
+date: "4 November 2024 (updated: `r Sys.Date()`)"
+output:
+  xaringan::moon_reader:
+    css: [default, "style/middlebury.css", "style/middlebury-fonts.css"]
+    lib_dir: libs
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+      ratio: "16:9"
+
+---
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+
+knitr::opts_chunk$set(eval = TRUE,
+               echo = TRUE,
+               warning = FALSE,
+               message = FALSE,
+               cache = FALSE)
+
+htmltools::tagList(rmarkdown::html_dependency_font_awesome())
+```
+
+```{r plots_and_figures, include=FALSE}
+library(ggplot2)
+library(kableExtra)
+
+theme_set(theme_gray(15))
+```
+
+```{r, references, echo=FALSE, cache=FALSE}
+library(RefManageR)
+BibOptions(check.entries = FALSE, 
+           bib.style = "numeric", 
+           cite.style = "authoryear", 
+           style = "markdown",
+           hyperlink = FALSE, 
+           dashed = FALSE)
+bib <- ReadBib("../refs/references.bib", check = FALSE)
+```
+
+
+class: title-slide-section-gray
+
+
+# METHODS LECTURE 1 - WEEK 44 (Uncertainty)
+
+In this section, we discuss uncertainty quantification. Learning objectives are: 
+
+  * frequentist uncertainty quantification (the benchmark for most students)
+  
+  * bootstrap uncertainty quantification (less traditional)
+  
+  * multiple hypothesis testing and associated adjustments (BH Algorithm)
+  
+  * algorithmic thinking (a first pass)
+
+Material draws heavily from Chapter 1 of `r Citet(bib, "Taddy19")`. 
+
+---
+
+
+# Uncertainty
+
+Inputs into our models often referred to covariates/inputs/signals. 
+
+Signals can be informative or noisy. 
+
+Easy to confuse informative signals with noise (overfitting). 
+
+Proper understanding and quantification of uncertainty are critical for avoiding erroneous conclusions relating to such confusion. 
+
+---
+
+# Uncertainty
+
+Early statistics and econometrics courses focus on frequentist approach to uncertainty:
+
+  * there is a target population of interest
+  * obtain one sample from target population
+  * measure statistics such as sample mean $\bar{X}$
+  * decide whether $\bar{X}$ is "large" relative to distribution of $\bar{X}$s across infinite number of "identical" samples 
+      + "large" means $t = \bar{X}/\widehat{Var}(\bar{X})$ is more than 2 standard deviations away from null under assuming null is true 
+      + "identical" refers to sampling process used to generate each of the infinite number of samples. 
+  * Decision is facilitated by CLT, that is, knowledge that true distribution of $t = \bar{X}/\widehat{Var}(\bar{X})$ is approximately normal (or student-t) in large samples.       
+
+Many data science situations where "true" distributions cannot be determined. This would be the case for example if the sampling procedure cannot be replicated (regression with estimated controls e.g.). An alternative in these cases is called the bootstrap.  
+
+---
+
+# Frequentist uncertainty
+
+.pull-left[
+
+Frequentist approach is based around following thought experiment: 
+
+  * Suppose you sample often from some target population.   
+  * Sample is drawn is exactly the same way each time. 
+  * Uncertainty refers to the variability of statistics across an infinite number of these samples  
+  
+Approach is depicted in the figure on the right: 
+  
+  * Top layer - there is some distribution that describes the population for the random variable $X$.  
+  * Middle layer - draw 5 samples from the distribution in the top layer. For each sample, you compute the sample mean $\{\bar{X}_1$, $\bar{X}_2$, ..., $\bar{X}_5\}$.  
+  * Bottom layer - compute a frequency distribution for $\{\bar{X}_1$, $\bar{X}_2$, ..., $\bar{X}_5\}$. This is your approximation of the sampling distribution for $\bar{X}$.   
+
+Standard error of $\bar{X}$ is then $se(\bar{X}) = se(\bar{X}) =  \frac{\sqrt{\frac{1}{n-1}\sum_{i=1}^n (X_i - \bar{X})^2}}{\sqrt{n}}$
+ 
+
+]
+.pull-right[
+
+```{r, echo=FALSE, out.width="100%"}
+  knitr::include_graphics("figs/FreqSampDist.png")
+```
+
+]
+
+---
+
+# Bootstrap uncertainty
+
+.pull-left[
+
+Basic idea of the bootstrap:  
+
+  * treat your sample as a population with size $n$
+  * you sample with replacement from your sample/"population". Samples are all size $n$.    
+  * uncertainty refers to the variability of statistics across the samples you drew. 
+  * this variability reflects sampling "with replacement". 
+  * sampling without replacement would generate no variability across samples. 
+  * compare the top layer of the figure on the right with the top layer on the last slide to gain intuition
+  
+]
+.pull-right[
+```{r, echo=FALSE, out.width="100%"}
+  knitr::include_graphics("figs/BootSampDist.png")
+```
+]
+
+---
+
+# Bootstrap uncertainty
+
+.pull-left[
+
+ALGORITHM 1 (Nonparametric Bootstrap). Given data $\{X_1, X_2, ..., X_n\}$:
+
+  1. Resample with replacement $\{X_1^{(1)}, X_2^{(1)}, ..., X_n^{(1)}\}$.
+  
+  2. Compute your estimate $\bar{X}^{(1)}$.
+  
+  3. Go back to step 1 $B-1$ times to get $\bar{X}^{(1)}, \bar{X}^{(2)}, ..., \bar{X}^{(B)}$
+
+Compute the standard error (standard deviation of your sampling distribution):
+
+\begin{align*}
+se(\bar{X}) = sd(\bar{X}_b) = \sqrt{\frac{1}{B}\sum_b(\bar{X}_b - \bar{X})^2}
+\end{align*}
+
+where $\bar{X}$ is the sample mean for the full sample. We are effectively taking this to be the true value of $\mathbb{E}[X]$. This is why we divide by $B$ instead of $B-1$.   
+
+]
+.pull-right[
+```{r, echo=FALSE, out.width="100%"}
+  knitr::include_graphics("figs/BootSampDist.png")
+```
+]
+
+---
+
+# Chapter 1 - Frequentist vs Bootstrap
+
+```{r}
+  browser <- read.csv("C:/Users/aditc/OneDrive/Documents/web-browsers.csv")
+  dim(browser)
+  head(browser)
+  tail(browser)
+```
+
+---
+
+# Frequentist vs Bootstrap
+
+
+.pull-left[
+
+```{r}
+  mean(browser$spend); var(browser$spend)/1e4; sqrt(var(browser$spend)/1e4); var(browser$spend); mean(browser$hispanic)
+```
+
+]
+.pull-right[
+```{r}
+  B <- 1000
+  mub <- c()
+  for (b in 1:1000){
+    samp_b <- sample.int(nrow(browser), replace=TRUE)
+    mub <- c(mub, mean(browser$spend[samp_b]))
+  }
+  sd(mub)
+
+  mub <- c()
+  for (b in 1:2000){
+    samp_b <- sample.int(nrow(browser), replace=TRUE)
+    mub <- c(mub, mean(browser$spend[samp_b]))
+  }
+  sd(mub)
+  
+  mub <- c()
+  for (b in 1:5000){
+    samp_b <- sample.int(nrow(browser), replace=TRUE)
+    mub <- c(mub, mean(browser$spend[samp_b]))
+  }
+  sd(mub)
+  
+  mub <- c()
+  for (b in 1:50){
+    samp_b <- sample.int(nrow(browser), replace=TRUE)
+    mub <- c(mub, mean(browser$spend[samp_b]))
+  }
+  sd(mub)
+  
+  mub <- c()
+  for (b in 1:1000){
+    samp_b <- sample.int(nrow(browser), replace=FALSE)
+    mub <- c(mub, mean(browser$spend[samp_b]))
+  }
+  sd(mub)
+  
+  mub <- c()
+  for (b in 1:1000){
+    samp_b <- sample.int(nrow(browser), replace=TRUE)
+    mub <- c(mub, mean(browser$spend[samp_b]))
+  }
+  sd(mub)
+  
+```
+]
+
+---
+
+# Frequentist vs Bootstrap
+
+We can overlay theoretical sampling distribution of frequentist approach on bootstrap sampling distributions: 
+
+```{r, echo=FALSE}
+  B <- 1000
+  mub <- c()
+  for (b in 1:1000){
+    samp_b <- sample.int(nrow(browser), replace=TRUE)
+    mub <- c(mub, mean(browser$spend[samp_b]))
+  }
+```
+
+
+```{r, out.width = "30%", fig.align='center'}    
+  h <- hist(mub)
+  xfit <- seq(min(mub), max(mub), length = 40) 
+  yfit <- dnorm(xfit, mean = mean(browser$spend), sd = sqrt(var(browser$spend)/1e4)) 
+  yfit <- yfit * diff(h$mids[1:2]) * length(mub) 
+  #can you explain why we need each term in the last expression?
+  #Yes, the line of code above scales the yfit normal distribution line to match the initialized histogram's scale: diff(h$mids[1:2]) gives the width of the histogram bins using midpoints (this is needed to adjust the yfit line to the scale of the histogram), yfit is needed on the right hand side because it's being scaled using * operator and length(mub) is needed to scale properly because the histogram represents frequency counts while the normal distribution represents density and length(mub) gives us the frequency counts
+  lines(xfit, yfit, col = "black", lwd = 4)
+  
+```
+
+---
+
+# Bootstrapping regressions 
+
+Suppose our interest is in: $ln(spending) = \beta_0 + \beta_1 broadband + \beta_2 anychildren + e$  
+
+```{r}
+  B <- 1000
+  betas <- c()
+  for (b in 1:1000){
+    samp_b <- sample.int(nrow(browser), replace=TRUE)
+    reg_b <- glm(log(spend) ~ broadband + anychildren, data=browser[samp_b,])
+    betas <- rbind(betas, coef(reg_b))
+  }; head(betas, n=3)
+  
+  B <- 1000
+  betas <- c()
+  for (b in 1:1000){
+    samp_b <- sample.int(nrow(browser), replace=FALSE)
+    reg_b <- glm(log(spend) ~ broadband + anychildren, data=browser[samp_b,])
+    betas <- rbind(betas, coef(reg_b))
+  }; head(betas, n=3)
+  
+```
+
+Each row viewed as draw from JOINT sampling distribution for $(\hat{\beta_0}, \hat{\beta_1}, \hat{\beta_2})$. Can use draws to estimate covariances between estimators 
+
+```{r}
+cov(betas[,"broadband"], betas[,"anychildren"])
+```
+
+Covariance is small and seemingly unimportant. Not always the case, especially in large $p$ settings. 
+
+---
+# Bootstrap summary
+
+  * Bootstrap is reliable even when theoretical sampling distribution is difficult to derive 
+    + e.g. when you estimate $Y_i = \beta_0 + \beta_1 \hat{X}_{i1} + e_i$ where $\hat{X}_{i1}$ is some estimate you obtained in a first stage. 
+      - not all standard error formulas account for fact that $\hat{X}_{i1}$ estimated in a first stage 
+      
+  * Especially useful when statistics are low dimensional
+      + Less trust-worthy in higher dimensional settings because joint sampling distribution may depend on covariates of other people 
+      
+  * Bootstrap performs poorly if sample is a poor approximation of the population.
+      + Bootstrap can perform poorly even if sample is a good approximation, 
+        - e.g., in the case where the population has heavy tails and the goal is to bootstrap the sampling distribution for the sample mean. 
+
+# END METHODS LECTURE 1 - WEEK 44
+
+---
+
+# METHODS LECTURE 2 - WEEK 45
+
+.pull-left[
+
+  * Uncertainty quantification was main methods topic in last lecture. 
+    + Emphasized distinction between frequentist and bootstrap uncertainty. 
+      - Frequentist uncertainty 
+
+]
+.pull-right[
+```{r, echo=FALSE, out.width="100%"}
+  knitr::include_graphics("figs/FreqSampDist.png")
+```
+]
+  
+---
+
+# METHODS LECTURE 2 - WEEK 45
+
+.pull-left[
+
+  * Uncertainty quantification was main methods topic in last lecture. 
+    + Emphasized distinction between frequentist and bootstrap uncertainty. 
+      - Frequentist uncertainty 
+      - Bootstrap uncertainty 
+    
+
+]
+.pull-right[
+```{r, echo=FALSE, out.width="100%"}
+  knitr::include_graphics("figs/BootSampDist.png")
+```
+]
+
+---
+
+# METHODS LECTURE 2 - WEEK 45
+
+.pull-left[
+
+  * Uncertainty quantification was main methods topic in last lecture. 
+    + Emphasized distinction between frequentist and bootstrap uncertainty. 
+      - Frequentist uncertainty 
+      - Bootstrap uncertainty 
+    + Bootstrap uncertainty is useful when theoretical sampling distribution is difficult to derive
+      - noted some caveats (sample is a poor approximation to population)
+    + Went through some code - specifically frequency calculation  
+
+]
+.pull-right[
+```{r, echo=FALSE, out.width="100%"}
+  knitr::include_graphics("figs/BootSampDist.png")
+```
+]
+
+
+---
+
+# METHODS LECTURE 2 - WEEK 45
+
+.pull-left[
+
+  * Uncertainty quantification was main methods topic in last lecture. 
+  
+    + Emphasized distinction between frequentist and bootstrap uncertainty. 
+      - Frequentist uncertainty 
+      - Bootstrap uncertainty 
+    + Bootstrap uncertainty is useful when theoretical sampling distribution is difficult to derive
+      - noted some caveats (sample is a poor approximation to population)
+    + Went through some code - specifically frequency calculation  
+    
+* Today we discuss 
+  
+    + hypothesis testing 
+    + regression
+
+]
+.pull-right[
+```{r, echo=FALSE, out.width="100%"}
+  knitr::include_graphics("figs/BootSampDist.png")
+```
+]
+
+
+---
+
+# False Discovery Rate (FDR)
+
+.pull-left[
+
+  * Two types of errors in classical (Neyman-Pearson) framework for testing single hypothesis:
+
+    1. False positives/discoveries/rejection of status quo
+    2. False negatives/non-discoveries/non-rejection of status quo  
+
+
+* Tie our hands on an acceptable rate of false positives (level of significance $\alpha$). Look for a "good" statistic, i.e. one that minimizes the rate of false negatives. 
+  
+]
+
+.pull-right[
+
+|                 | Declare non-significant | Declared  significant |Column totals|
+|-----------------|-------------------------|-----------------------|-------------|
+| Null is true    | $TN$                    | $FP$                  | $m_1$       |
+| Null is false   | $FN$                    | $TP$                  | $m_0$       |
+| Row totals      | $n_1$                   | $n_0$                 | $N$         |
+
+where: 
+  * $FP$ counts false positives
+  * $FN$ counts false negatives
+  * $TP$ counts true positives
+  * $TN$ counts true negatives
+  * $n_1$, $n_0$, $m_1$, $m_0$ are counts 
+  * Type I error rate is $\mathbb{E}[\frac{FP}{N}]$
+
+Testing hypotheses one by one at level $\alpha$ ensures that $\mathbb{E}[\frac{FP}{N}]\leq \alpha$. 
+]
+
+---
+
+# False Discovery Rate (FDR)
+
+.pull-left[
+
+  * More complex in big data (large $p$) settings where interest is multiple rather than a single hypothesis. 
+  
+    + $\#$ false positives increases with $\#$ tests. 
+    + Higher proportion of false positives with fewer informative signals in your regression 
+    + e.g. predicting job application propensity of visitors to company website
+      - lucky to get 1 true signal; 1 website in browser history which is informative for application decision. 
+      - suppose 1000 signals in all. 999 are then noise. But $.05*999\approx 50$ false discoveries. 
+      - false discovery proportion would then be $FD Proportion = 50/51 = 98\%$
+      - proportion goes to 100% as number of noisy signals goes to infinity. 
+  
+]
+
+.pull-right[
+
+|                 | Declare non-significant | Declared  significant |Column totals|
+|-----------------|-------------------------|-----------------------|-------------|
+| Null is true    | $TN$                    | $FP$                  | $m_1$       |
+| Null is false   | $FN$                    | $TP$                  | $m_0$       |
+| Row totals      | $n_1$                   | $n_0$                 | $N$         |
+
+where: 
+  * $FP$ counts false positives
+  * $FN$ counts false negatives
+  * $TP$ counts true positives
+  * $TN$ counts true negatives
+  * $n_1$, $n_0$, $m_1$, $m_0$ are counts 
+  * Type I error rate is $\mathbb{E}[\frac{FP}{N}]$
+
+Testing hypotheses one by one at level $\frac{\alpha}{N}$ ensures that $\mathbb{P}(FP\geq 1) \leq \alpha$. 
+]
+
+---
+
+# False Discovery Rate (FDR)
+
+Rescaling at the bottom of the last slide is an adjustment for multiple hypothesis tests. That is, testing multiple $N$ hypotheses one by one at level $\frac{\alpha}{N}$ ensures that $\mathbb{P}(FP\geq 1) \leq \alpha$. 
+
+This is a strict rule that comes at the cost of statistical power (probability of detecting a true false null). The BH algorithm that we will discuss shortly develops a rule that comes at a lower cost in terms of statistical power. 
+
+---
+# False Discovery Rate (FDR)
+
+By definition, we have the false discovery proportion
+
+\begin{align*}
+\textrm{FDP} = \frac{\textrm{# false positives}}{\textrm{# statistically significant tests}}
+\end{align*}
+
+Cannot "control"/"set"/"agree on" a FDP beforehand because we will not know if our statistically significant tests are false positives. 
+
+Can "control"/"set"/"agree on" the expected false discovery proportion
+\begin{align*}
+FDR = \mathbb{E}[\textrm{FD Proportion}] 
+\end{align*}
+which is also known as the false discovery rate. It is the multivariate equivalent of $\alpha$ from single hypothesis testing. We control it by pre-selecting a $q$ such that
+\begin{align*}
+FDR \leq q.
+\end{align*}
+
+We want to follow a procedure which ensures $FDR \leq q$.
+
+---
+# Benjamini-Hochberg (BH) Algorithm
+
+.pull-left[
+
+BH proposed such a procedure in their `r Citet(bib, "BenjaminiEtAl95")` paper. Their procedure is as follows. Suppose you are testing $m$ hypotheses $H_1,H_2,...,H_m$. 
+  1. Pick a target $q$ (e.g. $q=0.1$). 
+  2. Obtain the corresponding $p$-values $p_1, p_2,...,p_m$. 
+  3. Re-order the $p$-values on the basis of their observed value $p_{(1)}\leq p_{(2)}\leq ...\leq p_{(m)}$. 
+  4. Find the largest $i$ for which $p_{(i)}\leq \frac{i}{m}q$. Call this $i$ $k$.
+  5. Reject $H_{(i)}$ for all $i$ up to an including $k$ (i.e. for $i=1,2,...,k$). 
+
+
+]
+.pull-right[
+  
+Example: Suppose $q=0.1$, $p_1 = 0.5$, and $p_2 = 0.01$. 
+  * Then the ordered p-values are:
+    + $p_{(1)}=p_2=0.01$ and 
+    + $p_{(2)}=p_1=0.5$. 
+  * Compute the adjusted targets 
+    + $\frac{i}{m}q = \frac{1}{2}*0.1 = 0.05$ for $i=1$ and 
+    + $\frac{i}{m}q = \frac{2}{2}*0.1 = 0.1$ for $i=2$. 
+  * Clear that 
+    + $p_{(1)}\leq 0.05$ but 
+    + $p_{(2)}> 0.1$. 
+  * Reject $H_{(1)}$ but not $H_{(2)}$.  
+]
+---
+
+# BH Algorithm Example 1
+
+```{r}
+  browser <- read.csv("C:/Users/aditc/OneDrive/Documents/web-browsers.csv")
+  spendy <- glm(log(spend) ~ . -id, data=browser)
+  round(summary(spendy)$coef,2)
+  pval <- summary(spendy)$coef[-1, "Pr(>|t|)"]
+  pvalrank <- rank(pval)
+  print(pvalrank)
+  reject <- ifelse(pval< (0.1/9)*pvalrank, 2, 1) 
+  png(file="C:/Users/aditc/OneDriveBHAlgoExample.png",
+  width=600, height=350)
+  plot(pvalrank, pval, ylab="p-value", xlab="p-value rank", pch=16, col=reject)
+  lines(pvalrank, (0.1/9)*pvalrank)
+  dev.off()
+  
+  spendy <- glm(log(spend) ~ . , data=browser)
+  round(summary(spendy)$coef,2)
+  
+  spendy <- glm(log(spend) ~ . -id, data=browser)
+  round(summary(spendy)$coef,3)
+```
+
+---
+
+# BH Algorithm Example 1
+
+```{r, echo=FALSE, out.width = "80%", fig.align='center'}
+
+knitr::include_graphics("figs/BHAlgoExample.png")
+
+```
+
+---
+
+# BH Algorithm Example 2
+
+```{r}
+SC <- read.csv("C:/Users/aditc/OneDrive/Documents/semiconductor.csv")
+dim(SC)
+full <- glm(FAIL ~ ., data=SC, family=binomial)
+pvals <- summary(full)$coef[-1,4] #-1 to drop the intercept
+print(pvals)
+
+pvals2 <- summary(full)$coef[-1,5] #-1 to drop the intercept, going to 5 puts us out of bounds
+print(pvals)
+
+```
+
+---
+
+# BH Algorithm Example 2
+
+```{r}
+hist(pvals, xlab="p-value", main="", col="lightblue")#looks like we have some 
+hist(pvals, xlab="p-value", main="Histogram of p-values", col="lightblue")#looks like we have some 
+```
+
+---
+
+
+```{r, echo=FALSE}
+fdr_cut <- function(pvals, q=0.2){
+  pvals <- sort(pvals[!is.na(pvals)])
+  N <- length(pvals)
+  k <- rank(pvals, ties.method="max")
+  alpha <- max(pvals[ pvals<= (q*k/(N+1)) ])
+  
+  plot(pvals, log="xy", xlab="order", main=sprintf("FDR of %g",q),
+   ylab="p-value", bty="n", col=c(8,2)[(pvals<=alpha) + 1], pch=20)
+  lines(1:N, q*(1:N)/(N+1))
+
+  return(alpha)
+}
+
+
+```
+
+```{r}
+fdr_cut(pvals)
+
+fdr_cut <- function(pvals,q){
+  pvals <- sort(pvals[!is.na(pvals)])
+  N <- length(pvals)
+  k <- rank(pvals, ties.method="min")
+  alpha <- max(pvals[ pvals<= (q*k/(N+1)) ])
+  
+  plot(pvals, log="xy", xlab="order", main=sprintf("FDR of %g",q),
+   ylab="p-value", bty="n", col=c(8,2)[(pvals<=alpha) + 1], pch=20)
+  lines(1:N, q*(1:N)/(N+1))
+
+  return(alpha)
+  
+fdr_cut(pvals,q=0.5)
+
+```
+
+
+---
+
+# References
+
+```{r, 'refs1', results='asis', echo=FALSE, eval=TRUE}
+PrintBibliography(bib, start = 1, end = 6)
+```
