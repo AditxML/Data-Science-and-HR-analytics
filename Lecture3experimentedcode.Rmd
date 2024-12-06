@@ -1,0 +1,399 @@
+---
+title: "FEM11213 - Data Science and HR Analytics"
+subtitle: "03 - Regression"
+author: "Sacha Kapoor"
+date: "07 November 2023 (updated: `r Sys.Date()`)"
+output:
+  xaringan::moon_reader:
+    css: [default, "style/middlebury.css", "style/middlebury-fonts.css"]
+    lib_dir: libs
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+      ratio: "16:9"
+
+---
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+
+knitr::opts_chunk$set(eval = TRUE,
+               echo = TRUE,
+               warning = FALSE,
+               message = FALSE,
+               cache = FALSE)
+
+htmltools::tagList(rmarkdown::html_dependency_font_awesome())
+```
+
+```{r plots_and_figures, include=FALSE}
+library(ggplot2)
+library(kableExtra)
+
+theme_set(theme_gray(15))
+```
+
+```{r, references, echo=FALSE, cache=FALSE}
+library(RefManageR)
+BibOptions(check.entries = FALSE, 
+           bib.style = "numeric", 
+           cite.style = "authoryear", 
+           style = "markdown",
+           hyperlink = FALSE, 
+           dashed = FALSE)
+bib <- ReadBib("../refs/references.bib", check = FALSE)
+```
+
+
+class: title-slide-section-gray
+
+# Regression
+
+Learning objectives: 
+
+  * linear regression (refresher)
+  
+  * regression estimation in R
+  
+  * logistic regression 
+  
+  * deviance and generalized goodness of fit $R^2$ measures.
+
+Material draws heavily from Chapter 2 of `r Citet(bib, "Taddy19")`. 
+
+---
+
+# Regression
+
+Regression is key to applied data science. Model some response variable $y$ as a function of inputs or covariates $\mathbf{x}$. Common practice assumes 
+\begin{align*}
+\mathbb{E}[y|\mathbf{x}] = f(\mathbf{x}'\boldsymbol\beta) 
+\end{align*}
+where $\mathbf{x}'\boldsymbol\beta$ is shorthand for $\beta_0 + \beta_1 x_1 + .... + x_p\beta_p$. $f$ is called "link" function. Common practice assumes link function is
+\begin{align*}
+f(z) = z. 
+\end{align*}
+Implies that 
+
+\begin{align*}
+\mathbb{E}[y|\mathbf{x}] = \mathbf{x}'\boldsymbol\beta 
+\end{align*}
+
+which is statistical basis for linear regression. 
+
+---
+
+# Regression
+
+To run regressions in R 
+```{r}
+oj <- read.csv("C:/Users/aditc/OneDrive/Documents/oj.csv")
+head(oj, n=5)    
+tail(oj, n=5)    
+glm(log(sales) ~ brand + log(price), data=oj)
+experimentmodel <- glm(log(price) ~ log(sales) + brand, data = oj)
+summary(experimentmodel)
+
+
+```
+---
+# Regression
+
+```{r}
+glm(log(sales) ~ brand + log(price), data=oj)
+
+```
+where base group is the house brand oj (dominicks). 
+
+---
+# Regression
+
+Note that glm creates dummies for brand in background via: 
+```{r}
+x <- model.matrix(~ brand + log(price), data=oj); head(x); tail(x)
+
+```
+
+---
+# Regression
+
+Can change the base group 
+```{r}
+oj$brand = as.factor(oj$brand)
+x <- model.matrix(~ brand + log(price), data=oj); head(x)
+oj$mybrand = relevel(oj$brand, "tropicana")
+x <- model.matrix(~ mybrand + log(price), data=oj); head(x)
+```
+
+---
+
+# Regression
+
+Can change the base group 
+```{r}
+oj$brand = as.factor(oj$brand)
+x <- model.matrix(~ brand + log(price), data=oj); head(x)
+oj$mybrand = relevel(oj$brand, "tropicana")
+x <- model.matrix(~ mybrand + log(price), data=oj); head(x)
+
+oj$mybrand2 = relevel(oj$brand, "minute.maid")
+x <- model.matrix(~ mybrand2 + log(price), data=oj); head(x)
+```
+
+---
+
+# Regression
+
+Can consider less restrictive regressions: $log(sales) = \alpha_{b,feat} + \beta_{b,feat}log(price) + e$, $feat$ is short for featured 
+```{r}
+glm(log(sales) ~ log(price)*brand*feat, data=oj)
+
+glm(log(sales) ~ log(price)*mybrand*feat, data=oj)
+glm(log(sales) ~ log(price)*mybrand2*feat, data=oj)
+
+```
+
+---
+
+# Logistic Regression
+
+An alternative link function to f(z) = z is the logit. The logit link is used to model binary dependent variables. We proceed in steps. First, recall that in the case of a binary dependent variable:  
+\begin{align*}
+\mathbb{E}[y|\mathbf{x}] = P(y=1|\mathbf{x})
+\end{align*}
+Second, note that the logit link is 
+\begin{align*}
+f(z) = \frac{exp(z)}{1+exp(z)}
+\end{align*}
+This implies 
+\begin{align*}
+P(y=1|\mathbf{x}) = \frac{exp(\beta_0 + \beta_1 x_1 + ... +  \beta_p x_p)}{1+exp(\beta_0 + \beta_1 x_1 + ... +  \beta_p x_p)}
+\end{align*}
+
+How do we interpret coefficients in this model? To see how, let $p = P(y=1|\mathbf{x})$. One can show 
+\begin{align*}
+ln(\frac{p}{1-p}) = \beta_0 + \beta_1 x_1 + ... +  \beta_p x_p, 
+\end{align*}
+i.e., the logistic model is a linear model for the log odds. Odds are the probability of an event relative to the probability of that event not occuring. Thus the coefficients tell us about the percentage change in log odds for a change in $x$.  
+
+---
+
+# Logistic Regression
+
+It is often more convenient to exponentiate the coefficients to obtain the multiplicative effect of x on the odds of interest. To see this, exponeniate both sides of the above question to get 
+\begin{align*}
+\frac{p}{1-p} & = exp(\beta_0 + \beta_1 x_1 + ... +  \beta_p x_p)\\
+              & = exp(\beta_0)exp(\beta_1 x_1)...exp(\beta_p x_p)
+\end{align*}
+Suppose interest in how odds change when $x_1$ increases to $x_1 + 1$. Then the right hand side becomes  
+\begin{align*}
+exp(\beta_0)exp(\beta_1 (x_1 + 1))...exp(\beta_p x_p)
+\end{align*}
+which equals 
+\begin{align*}
+exp(\beta_0)exp(\beta_1 x_1)...exp(\beta_p x_p)exp(\beta_1) 
+\end{align*}
+and then 
+\begin{align*}
+\frac{p}{1-p}exp(\beta_1)
+\end{align*}
+Thus, we say that a 1 unit increase in $x_1$ scales the odds of $y=1$ up or down by a factor of $exp(\beta_1)$. 
+
+---
+
+# Logistic Regression
+
+```{r, echo=FALSE, out.width = "70%", fig.align='center'}
+
+knitr::include_graphics("figs/Logistic.png")
+
+```
+
+---
+
+# Logistic Regression Example
+
+Can use logistic regression to build a filter for allocating spam to junk mail. Can train filter using logistic regression and previous emails.  
+
+```{r}
+email <- read.csv("C:/Users/aditc/OneDrive/Documents/spam.csv")
+dim(email)
+colnames(email) 
+head(email)
+tail(email)
+```
+
+---
+
+```{r}
+glm(spam ~ ., data=email, family='binomial')
+```
+
+```{r,echo=FALSE}
+spammy <- glm(spam ~ ., data=email, family='binomial')
+round(summary(spammy$coef), 3)
+```
+
+---
+
+# Logistic Regression Example
+
+```{r}
+coef(spammy)["word_free"]; exp(coef(spammy)["word_free"])
+
+
+```
+
+Spam odds increases by a factor of 5 if email contains the word "free". 
+
+```{r}
+coef(spammy)["word_george"]; exp(coef(spammy)["word_george"]); 1/exp(coef(spammy)["word_george"])
+
+coef(spammy)["word_meeting"]; exp(coef(spammy)["word_meeting"]); 1/exp(coef(spammy)["word_meeting"])
+```
+
+Spam odds decrease by a factor of 300 if email contains the word "george". The dataset is a set of emails to a person named "george". 
+
+---
+
+# Logistic Regression Example
+
+We can obtain predicted values 
+
+\begin{align*}
+\widehat{P(y=1|\mathbf{x})} = \frac{exp(\widehat{\beta_0} + \widehat{\beta_1} x_1 + ... +  \widehat{\beta_p} x_p)}{1+exp(\widehat{\beta_0} + \widehat{\beta_1} x_1 + ... +  \widehat{\beta_p} x_p)}
+\end{align*}
+
+for each observation (for each row in our data). To obtain predicted probabilities for observations 1 and 4000: 
+
+```{r}
+predict(spammy, newdata = email[c(1,4000),], type="response")
+
+predict(spammy, newdata = email[c(1:5),], type="response")
+
+predict(spammy, newdata = email[c(1,4000),], type="link")
+
+
+```
+
+where $type="response"$ tells R to return the predicted probabilities rather than the predicted linear function $\widehat{\beta_0} + \widehat{\beta_1} x_1 + ... +  \widehat{\beta_p} x_p$. The first email is true spam. The predicted probability says it has an 88 percent chance of being spam. The second email is real. It has 15 percent chance of being spam. 
+
+---
+
+# Deviance and Likelihood
+
+At the bottom of the spam regression output you will see 
+
+```{r}
+summary(spammy)$deviance
+summary(spammy)$null.deviance
+
+```
+
+What are these statistics? 
+
+---
+
+# Deviance and Likelihood
+
+$\textbf{Deviance}$ is an important concept. Measures deviations of observed/fitted model from a "perfect"/saturated model. Fitted model for logistic regression is 
+\begin{align*}
+\widehat{P(y=1|\mathbf{x})} = \frac{exp(\widehat{\beta_0} + \widehat{\beta_1} x_1 + ... +  \widehat{\beta_p} x_p)}{1+exp(\widehat{\beta_0} + \widehat{\beta_1} x_1 + ... +  \widehat{\beta_p} x_p)}
+\end{align*}
+and saturated model is $\widehat{P(y=1|\mathbf{x})} = y$. Deviance defined as  
+\begin{align*}
+\text{deviance(fitted logistic, saturated model)} = -2\ell(\widehat{\boldsymbol\beta}) + 2 \ell(\textrm{saturated model})
+\end{align*}
+where $\ell(\boldsymbol\beta) = \sum \Big[yln(P(y=1|\mathbf{x})) + (1-y)ln(1-P(y=1|\mathbf{x}))\Big]$ is the log likelihood function. Second term $\ell(\textrm{saturated model})$ is always 0 (Why?). 
+
+Implies 
+\begin{align*}
+\text{deviance(fitted logistic, saturated model)} = -2\ell(\widehat{\boldsymbol\beta}) = -2\sum \Big[yln(\frac{e^{\mathbf{x}'\widehat{\boldsymbol\beta}}}{1+e^{\mathbf{x}'\boldsymbol\beta}}) + (1-y)ln(1-\frac{e^{\mathbf{x}'\widehat{\boldsymbol\beta}}}{1+e^{\mathbf{x}'\widehat{\boldsymbol\beta}}})\Big]
+\end{align*}
+
+---
+
+# Deviance and Likelihood
+
+$\textbf{Null deviance}$ is benchmark for evaluating magnitude of deviance. Null deviance defined as 
+
+\begin{align*}
+\textrm{deviance(null model, saturated model)} = -2\ell(\widehat{\beta_0}) = -2 \sum \Big[yln(\frac{e^{\widehat{\beta_0}}}{1+e^{\widehat{\beta_0}}}) + (1-y)ln(\frac{e^{\widehat{\beta_0}}}{1+e^{\widehat{\beta_0}}})\Big]
+\end{align*}
+
+where $\beta_0 = \beta_0 + 0*x_1 + ... + 0*x_p$. Can use null and fitted deviances to derive generalized $R^2$ statistic: 
+\begin{align*}
+R^2 = 1 - \frac{\textrm{deviance(fitted logistic, saturated model)}}{\textrm{deviance(null model, saturated model)}}
+\end{align*}
+
+
+---
+
+Source for figure is `r Citet(bib, "Garcia-Portugues23")`.
+
+```{r, echo=FALSE, out.width="50%"}
+  knitr::include_graphics("figs/SatvsFittedvsNull.png")
+```
+
+---
+
+# Deviance and Likelihood
+
+Notes: 
+
+  1. This $R^2$ reduces to the usual $R^2$ in the case of linear regression
+    + Here the deviance is proportional to $\sum (y - \mathbf{x}'\boldsymbol\beta)^2$
+    + The null deviance is proportional to $\sum (y - \bar{y})^2$. 
+    + Thus interpret $R^2$ as percentage of $y$ variance explained by $x$.
+    
+  2. Deviance is more general than this, however.  
+    + Ratio tells you how good fit is relative to fit of no-covariate model. 
+    + In case of logistic the null deviance is $-2 \sum \Big[yln(\bar{y}) + (1-y)ln(1-\bar{y}) \Big]$
+    + More general because applies to a wider class of probability models. 
+      - Class includes logistic and linear regression models as well as others. 
+
+  3. Generality explains why Deviance $R^2$ can be used to measure goodness of fit for *almost any machine learning model*. 
+
+---
+
+# Deviance and Likelihood Example 
+
+Returning to our example, we can compute the $R^2$
+
+```{r}
+D <- summary(spammy)$deviance; D
+D0 <- summary(spammy)$null.deviance; D0
+R2 <- 1 - D/D0; R2
+
+```
+
+Can thus explain approximately 75% of the variation in spam occurrence. 
+
+
+
+n <- nrow(email)
+email_half <- email[1:(n / 2), ]
+spammy <- glm(spam ~ ., data=email_half, family='binomial')
+D <- summary(spammy)$deviance  
+D0 <- summary(spammy)$null.deviance
+R2 <- 1 - D / D0
+
+D; D0; R2
+
+email_half2 <- email[(n / 2 + 1):n, ] 
+spammy <- glm(spam ~ ., data=email_half2, family='binomial')
+D <- summary(spammy)$deviance  
+D0 <- summary(spammy)$null.deviance 
+R2 <- 1 - D / D0 
+
+D; D0; R2
+
+head(email_half[,"spam"]); tail(email_half[,"spam"]); head(email_half2[,"spam"]); tail(email_half2[,"spam"])
+---
+
+# References
+
+```{r, 'refs1', results='asis', echo=FALSE, eval=TRUE}
+PrintBibliography(bib, start = 1, end = 6)
+```
