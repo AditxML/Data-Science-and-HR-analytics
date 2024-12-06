@@ -1,0 +1,852 @@
+---
+title: "FEM11213 - Data Science and HR Analytics"
+subtitle: "04 - Regularization"
+author: "Sacha Kapoor"
+date: "November 2024 (updated: `r Sys.Date()`)"
+output:
+  xaringan::moon_reader:
+    css: [default, "style/middlebury.css", "style/middlebury-fonts.css"]
+    lib_dir: libs
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+      ratio: "16:9"
+
+---
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+
+knitr::opts_chunk$set(eval = TRUE,
+               echo = TRUE,
+               warning = FALSE,
+               message = FALSE,
+               cache = FALSE)
+
+htmltools::tagList(rmarkdown::html_dependency_font_awesome())
+```
+
+```{r plots_and_figures, include=FALSE}
+library(ggplot2)
+library(kableExtra)
+
+theme_set(theme_gray(15))
+```
+
+```{r, references, echo=FALSE, cache=FALSE}
+library(RefManageR)
+BibOptions(check.entries = FALSE, 
+           bib.style = "numeric", 
+           cite.style = "authoryear", 
+           style = "markdown",
+           hyperlink = FALSE, 
+           dashed = FALSE)
+bib <- ReadBib("../refs/references.bib", check = FALSE)
+```
+
+
+class: title-slide-section-gray
+
+# Regularization 
+
+  * Goal in Applied Econometrics was identification of true model that generated our data. 
+  
+  * Goal here is prediction. 
+  
+  * Want reliable predictions about what value $y$ will take on in new data sets where we know $x$ alone. 
+  
+  * Boils down to selecting a model that does not under- or overfit the data. 
+  
+  * Selection process:  
+    + use regularization to reduce the set of candidate models
+    + regularization narrows set of all models by penaliz
+    6ing model complexity
+    + pick model that minimizes prediction error rate in new data (out of sample fit)
+
+Material draws heavily from Chapter 3 of `r Citet(bib, "Taddy19")`. 
+
+---
+
+# Out of Sample (OOS) Fit  
+
+OOS fit is our metric for model selection. Here is how it works. 
+
+Suppose you have an econometric model in mind, e.g. 
+
+\begin{align*}
+y_i = \mathbf{x}_i'\boldsymbol\beta + e_i, 
+\end{align*}
+
+and that you observe data on $N=n+m$ observations. 
+
+  * allocate $1,...,n$ observations for "training" purposes 
+  * obtain estimates $\boldsymbol{\beta}_{IS}$ using just this training sample 
+    + where $IS$ denotes "in sample". 
+  * check the fit of trained model on the untrained data of observations $n+1,...,m$ . 
+
+How do we check fit? 
+
+---
+
+# Out of Sample (OOS) Fit  
+
+OOS fit is our metric for model selection. Here is how it works. 
+
+Suppose you have an econometric model in mind, e.g. 
+
+\begin{align*}
+y_i = \mathbf{x}_i'\boldsymbol\beta + e_i, 
+\end{align*}
+
+and that you observe data on $N=n+m$ observations. 
+
+  * allocate $1,...,n$ observations for "training" purposes 
+  * obtain estimates $\boldsymbol{\beta}_{IS}$ using just this training sample 
+    + where $IS$ denotes "in sample". 
+  * check the fit of trained model on the untrained data of observations $n+1,...,m$ . 
+
+How do we check fit? Use out-of-sample deviance (or $R^2$): 
+
+\begin{align*}
+dev_{OOS}(\widehat{\boldsymbol\beta}_{IS}) = \sum_{i=n+1}^{n+m} (y_i - \mathbf{x}_i' \widehat{\boldsymbol\beta}_{IS})^2
+\end{align*}
+
+---
+
+# In Sample (IS) Fit  
+
+.pull-left[
+
+Why not use in-sample (IS) fit as our metric for model selection? IS deviance (or $R^2$) in case of linear regression is 
+
+\begin{align*}
+dev_{In}(\widehat{\boldsymbol\beta}_{IS}) = \sum_{i=1}^{n} (y_i - \mathbf{x}_i' \widehat{\boldsymbol\beta}_{IS})^2
+\end{align*}
+
+In-sample deviance not useful because can be increased artificially simply by adding more controls. This is called overfitting. 
+
+]
+
+.pull-right[
+
+
+```{r}
+
+knitr::include_graphics("figs/Overfit.png")
+
+```
+
+Source for figure: `r Citet(bib, "Webb17")`
+
+]
+
+---
+
+# Overfitting 
+
+What is overfitting? 
+
+---
+
+# Overfitting 
+
+What is overfitting? 
+
+Imagine trying to fit every data point in your sample. Will you be able to replicate this fit if you draw a new sample from your target population? Probably not. 
+
+Why is this important? Predictions from an overfitted model can be worse than predictions from no model at all. 
+
+---
+
+# Cross Validation
+
+Sampling is costly. Rare to get new samples to check the fit of our trained model. K-Fold Out-of-Sample (Out) Validation is an algorithm that lets you simulate the fit in new samples (without having to draw new samples). 
+
+```{r,  out.width = "60%", fig.align='center'}
+
+knitr::include_graphics("figs/CrossValidation.png")
+
+```
+
+Source: https://en.wikipedia.org/wiki/Cross-validation_(statistics)
+---
+
+# Cross Validation
+
+ALGORITHM 4 (K-Fold Out-of-Sample Validation). Given data $\{[\mathbf{x}_1,y_1], [\mathbf{x}_2,y_2],...,[\mathbf{x}_n,y_n]\}$:
+
+  1. Partition sample into K evenly sized subsets at random. These subsets are called folds. 
+  
+  2. For $k = 1,2,...,K$:
+      + Estimate $\widehat{\boldsymbol\beta_{-k}}$ while leaving out the $k^{th}$ fold. $-k$ means not $k$. In terms of above notation, $-k$ means $IS$ and $k$ means $OOS$.        
+      + Compute and record the $dev_{k}(\widehat{\boldsymbol\beta}_{-k})$ and then $R_k^2$ for the left out fold $k$.
+  
+Step 2 yields a sample of $R^2$ statistics: $\{R_1^2, R_2^2,..., R_K^2\}$. These statistics estimate the distribution of model's predictive performance in new data. 
+
+---
+
+# Cross Validation Example
+
+```{r}
+SC <- read.csv("C:/Users/aditc/OneDrive/Documents/semiconductor.csv")
+full <- glm(FAIL ~ ., data=SC, family=binomial)
+1 - full$deviance/full$null.deviance
+```
+
+We proceed in three steps in R. 
+
+  1. Define functions for the Deviance and $R^2$ in R. 
+  2. Partition data into k-folds and then run experiment for each fold. 
+  3. Plot the results. 
+
+---
+
+# Step 1 - K-fold functions
+
+```{r}
+## Out of sample prediction experiment
+## first, define the deviance and R2 functions
+
+## pred must be probabilities (0<pred<1) for binomial
+deviance <- function(y, pred, family=c("gaussian","binomial")){
+	family <- match.arg(family)
+	if(family=="gaussian"){
+		return( sum( (y-pred)^2 ) )
+	}else{
+		if(is.factor(y)) y <- as.numeric(y)>1
+		return( -2*sum( y*log(pred) + (1-y)*log(1-pred) ) )
+	}
+}
+
+## get null deviance too, and return R2
+R2 <- function(y, pred, family=c("gaussian","binomial")){
+	fam <- match.arg(family)
+	if(fam=="binomial"){
+		if(is.factor(y)){ y <- as.numeric(y)>1 }
+	}
+	dev <- deviance(y, pred, family=fam)
+	dev0 <- deviance(y, mean(y), family=fam)
+	return(1-dev/dev0)
+}
+```
+
+---
+
+# Step 2 - K-fold Partition/Experiment
+
+```{r}
+# setup the experiment
+n <- nrow(SC) # the number of observations
+K <- 10 # the number of `folds'
+# create a vector of fold memberships (random order)
+foldid <- rep(1:K,each=ceiling(n/K))[sample(1:n)]
+# create an empty dataframe of results
+Out <- data.frame(full=rep(NA,K)) 
+# use a for loop to run the experiment
+for(k in 1:K){ 
+	train <- which(foldid!=k) # train on all but fold `k'
+		
+	## fit regression on full sample
+	rfull <- glm(FAIL~., data=SC, subset=train, family=binomial)
+
+	## get prediction: type=response so we have probabilities
+	predfull <- predict(rfull, newdata=SC[-train,], type="response")
+
+	## calculate and log R2
+	Out$full[k] <- R2(y=SC$FAIL[-train], pred=predfull, family="binomial")
+
+	## print progress
+	cat(k, " ")
+}
+```
+
+---
+
+# Step 3 - K-fold plots
+
+.pull-left[
+
+```{r}
+boxplot(Out, col="plum", ylab="R2")
+```
+
+
+]
+
+.pull-right[
+
+```{r}
+## what are the average Out R2?
+colMeans(Out) 
+```
+
+So we have a negative $R^2$. How? 
+
+
+]
+
+
+deviance <- function(y, pred, family=c("gaussian","binomial")){
+	family <- match.arg(family)
+	if(family=="gaussian"){
+		return( sum( abs(y-pred) ) )
+	}else{
+		if(is.factor(y)) y <- as.numeric(y)>1
+		return( -2*sum( y*log(pred) + (1-y)*log(1-pred) ) )
+	}
+}
+
+## get null deviance too, and return R2
+R2 <- function(y, pred, family=c("gaussian","binomial")){
+	fam <- match.arg(family)
+	if(fam=="binomial"){
+		if(is.factor(y)){ y <- as.numeric(y)>1 }
+	}
+	dev <- deviance(y, pred, family=fam)
+	dev0 <- deviance(y, mean(y), family=fam)
+	return(1-dev/dev0)
+}
+
+# setup the experiment
+n <- nrow(SC) # the number of observations
+K <- 10 # the number of `folds'
+# create a vector of fold memberships (random order)
+foldid <- rep(1:K,each=ceiling(n/K))[sample(1:n)]
+# create an empty dataframe of results
+Out <- data.frame(full=rep(NA,K)) 
+# use a for loop to run the experiment
+for(k in 1:K){ 
+	train <- which(foldid!=k) # train on all but fold `k'
+		
+	## fit regression on full sample
+	rfull <- glm(FAIL~., data=SC, subset=train, family=binomial)
+
+	## get prediction: type=response so we have probabilities
+	predfull <- predict(rfull, newdata=SC[-train,], type="response")
+
+	## calculate and log R2
+	Out$full[k] <- R2(y=SC$FAIL[-train], pred=predfull, family="binomial")
+
+	## print progress
+	cat(k, " ")
+}
+
+colMeans(Out) 
+
+n <- nrow(SC) # the number of observations
+K <- 3 # the number of `folds'
+# create a vector of fold memberships (random order)
+foldid <- rep(1:K,each=ceiling(n/K))[sample(1:n)]
+# create an empty dataframe of results
+Out <- data.frame(full=rep(NA,K)) 
+# use a for loop to run the experiment
+for(k in 1:K){ 
+	train <- which(foldid!=k) # train on all but fold `k'
+		
+	## fit regression on full sample
+	rfull <- glm(FAIL~., data=SC, subset=train, family=binomial)
+
+	## get prediction: type=response so we have probabilities
+	predfull <- predict(rfull, newdata=SC[-train,], type="response")
+
+	## calculate and log R2
+	Out$full[k] <- R2(y=SC$FAIL[-train], pred=predfull, family="binomial")
+
+	## print progress
+	cat(k, " ")
+}
+
+colMeans(Out) 
+---
+
+# Step 3 - K-fold plots
+
+.pull-left[
+
+```{r}
+boxplot(Out, col="plum", ylab="R2")
+```
+]
+
+.pull-right[
+
+```{r}
+## what are the average Out R2?
+colMeans(Out) 
+```
+
+So we have a negative $R^2$. How? Inspect the equations
+
+\begin{align*}
+R^2 = 1 - \frac{D}{D_0} 
+\end{align*}
+
+If the deviance of the model on the untrained data is larger than the intercept only deviance (on the same data), then the model fit performs worse than the intercept only model. Consistent with this interpretation we would have $\frac{D}{D_0}>0$ and $R^2<0$.
+
+
+]
+
+---
+
+
+# Regularization paths
+
+Do we choose models from the set of all possible models? Imagine you have a dataset with $p$ covariates. The set of all possible models is $2^p=1048576$. It is not reasonable to try to catalog all these models. More reasonable to approach this problem in steps: 
+
+  1. Narrow down to set of "reasonable" models; 
+  2. Pick a model from this set of reasonable models. 
+
+*Regularization* is an idea that helps us narrow set of all models. The idea is to penalize model complexity. 
+
+.pull-left[
+
+One option for doing this is called *backward stepwise regression*. Here: 
+
+  1. Start with the most general model you can think of. 
+  2. Keep the covariates with the lowest $p$-values. 
+  3. Rerun the model with the covariates from Step 2. 
+
+]
+
+.pull-right[
+
+Why is backward stepwise regression a bad idea? 
+
+
+
+]
+
+---
+
+
+# Regularization paths
+
+Do we choose models from the set of all possible models? Imagine you have a dataset with $p$ covariates. The set of all possible models is $2^p=1048576$. It is not reasonable to try to catalog all these models. More reasonable to approach this problem in steps: 
+
+  1. Narrow down to set of "reasonable" models; 
+  2. Pick a model from this set of reasonable models. 
+
+*Regularization* is an idea that helps us narrow set of all models. The idea is to penalize model complexity. 
+
+.pull-left[
+
+One option for doing this is called *backward stepwise regression*. Here: 
+
+  1. Start with the most general model you can think of. 
+  2. Keep the covariates with the lowest $p$-values. 
+  3. Rerun the model with the covariates from Step 2. 
+
+]
+
+.pull-right[
+
+Why is backward stepwise regression a bad idea?
+
+  1. Multicollinearity. Can lead you to conclude no signal when in fact there is. 
+  2. $p$-values are from an overfit model. Will not be able to replicate reduced set of models in subsequent samples. 
+
+
+
+]
+
+
+---
+
+# Regularization paths
+
+.pull-left[
+
+An alternative to backward stepwise regression is 
+
+ALGORITHM 5 (Forward Stepwise Pegression). 
+
+  1. Set a level of complexity or model selection rule. 
+  
+  2. Fit simple regressions of $y$ on each covariate $x_s$ in your data. Take the simple regression with the highest $R^2$ as your benchmark model. 
+  
+  3. Fit bivariate regressions of $y$ on $x_s$ and each other covariate in your data: $y \approx \beta_s x_s + \beta_j x_j$ for all $j$ other than $s$.
+  
+  4. Fit trivariate regressions of $y$ on $x_s$, $x_j$, and each other covariate in your data: $y \approx \beta_s x_s + \beta_j x_j + \beta_k x_k$ for all $k$ other than $s$ and $j$.
+  
+  5. Continue until you reach pre-set complexity level or model selection rule is satisfied. 
+
+]
+
+.pull-right[
+
+Example of a greedy algorithm. Make locally optimal choices. Hope that they approximate globally optimal choice. 
+
+Algo is fast and more stable than backward stepwise regression (BSR): 
+  * More stable because of BSR prone to overfitting 
+  * Resampling comes with entirely different set of candidate models
+  
+]  
+
+---
+
+# Forward Stepwise Regression Example
+
+.pull-left[
+
+```{r}
+null <- glm(FAIL~1, data=SC)
+fwd <- step(null, scope=formula(full), dir="forward")
+```
+]
+
+.pull-right[
+
+```{r}
+length(coef(fwd))
+```
+
+Algo works up from 1 to 68 input signals (covariates). Stops because lower AIC for 68-signal model than for 69-signal model. This is the "best model" according to this greedy algorithm. 
+
+More stable than backward analog, but still not quite stable enough. Model may still be too complex. Predictive ability may still change wildly from sample to sample. *Regularization* can further stabilize predictive ability of candidate models. 
+
+]
+
+null <- glm(FAIL~1, data=SC)
+fwd_bic <- step(null, scope=formula(full), direction="forward", k=log(nrow(SC)))
+length(coef(fwd_bic))
+---
+
+# Regularization and Complexity Penalty
+
+A regularization strategy minimizes a penalized deviance. In the case of linear regression, this boils to finding the $\boldsymbol\beta$ that minimizes 
+
+\begin{align*}
+\sum (y- \mathbf{x}'\boldsymbol\beta)^2 
+\end{align*}
+subject to 
+\begin{align*}
+\sum_k c(\beta_k) \leq t
+\end{align*}
+
+In more general case, replace least squares criterion above with log likelihood function discussed earlier. Above is just constrainted optimization problem. Can rewrite problem 
+
+\begin{align*}
+\min_{\boldsymbol\beta} \sum (y- \mathbf{x}'\boldsymbol\beta)^2 + \lambda \sum_k c(\beta_k)
+\end{align*}
+
+where $\lambda$ is the penalty for being exceeding your "budget" for the regression coefficients. Penalty puts a cost on each $\beta_k$. Makes it more desirable to set $\beta_k=0$. This is what makes everything more stable across repeated samples. 
+
+---
+
+# Regularization and Complexity Penalty
+
+\begin{align*}
+\min_{\boldsymbol\beta} \sum (y- \mathbf{x}'\boldsymbol\beta)^2 + \lambda \sum_k c(\beta_k)
+\end{align*}
+
+has a very natural economic interpretation. There are two types of cost in this model: 
+
+  1. Estimation cost. The cost is higher if your model is further away from the data (as measured by the least squares function or likelihood)
+  2. Testing cost. You pay a cost if you choose to deviate from the status quo of 0. You are paying a cost for the instability generated by a non-zero coefficient.
+
+Have left function $c(\beta_k)$ general. In practice, functional form is well known 
+
+---
+
+# Regularization and Complexity Penalty
+
+```{r, echo=FALSE, out.width = "80%", fig.align='center'}
+
+knitr::include_graphics("figs/PenaltyFunctions.png")
+
+```
+
+  * $c(\beta_k) = \beta_k^2$ is *ridge* penalty function
+  * $c(\beta_k) = |\beta_k|$ is *lasso* penalty function
+  * $c(\beta_k) = \alpha\beta_k^2 + |\beta_k|$ is *elastic net* penalty function
+  * $c(\beta_k) = ln(1 + |\beta_k|)$ is *log* penalty function
+
+Interpretation of each penalty function? 
+
+---
+
+# LASSO/Ridge Comparison ($y= \beta_0 + e$)
+
+
+```{r, echo=FALSE, out.width = "90%", fig.align='center'}
+
+knitr::include_graphics("figs/LASSO and Ridge - Intercept Regression Model.png")
+
+```
+---
+
+# LASSO/Ridge Comparison ($y= \beta_0 + e$)
+
+To summarize the last figures: 
+  * True $\beta_0=1$. 
+  * Estimation cost minimized at $\beta=1$. 
+  * Testing cost minimized at $\beta_0=0$. 
+  * $\hat{\beta}_{0LASSO}$ and $\hat{\beta}_{0ridge}$ both approach 0 from left as penalty increases. 
+  * LASSO criterion (estimation + testing) always kinked at 0. 
+  * LASSO criterion increases sharply at 0 if penalty is sufficiently large. 
+  * Ridge criterion continues to decrease. 
+  * Without a kink you cannot generate a kink in the constrained criterion. 
+  * You always end up away from 0, even if it is just a little bit. This is why LASSO selects 0 when ridge does not. 
+
+Can check this with math (intercept only model). Is useful for understanding.  
+
+---
+
+# LASSO v. Ridge ($y= \beta_0 x_0 + \beta_1 x_1 + e$)
+
+
+```{r, echo=FALSE, out.width = "90%", fig.align='center'}
+
+knitr::include_graphics("figs/LASSO and Ridge - Multiple Regression Model.png")
+
+```
+
+---
+
+# LASSO v. Ridge ($y= \beta_0 x_0 + \beta_1 x_1 + e$)
+
+To summarize: 
+  * First model shows no corner solutions. 
+  * Second model shows that as you shrink the budget, more likely to get corner solution. 
+  * Third model shows that multicollinearity also generates corner solutions. 
+  * An interesting aspect of last case is that it does not work if the coefficients have identical magnitudes. This makes sense because there is no way to sort between them. 
+
+---
+
+Let us see how LASSO plays our with the math. The LASSO optimization problem is:
+
+$\min_{\boldsymbol\beta} \frac{1}{2} \sum_{i=1}^n (y_i - \mathbf{x}_i'\boldsymbol\beta)^2 + \lambda \sum_{i=1}^p |\beta_p|$
+
+First term is OLS criterion. Second term is LASSO regularization penalty. $\lambda$ is Lagrange multiplier associated with LASSO penalty. It reflects the effects of the sparsity constraint on the coefficients $\boldsymbol\beta$. The Karush-Kuhn-Tucker (KKT) first order conditions associated with this optimization problem are 
+
+$\sum_{i=1}^n x_{i1}(y_i - \mathbf{x}_i'\boldsymbol\beta) = \lambda\gamma_1$
+
+$\cdots$
+
+$\sum_{i=1}^n x_{ip}(y_i - \mathbf{x}_i'\boldsymbol\beta) = \lambda\gamma_p$
+
+where 
+
+$$
+  \gamma_1\in 
+    \begin{cases}
+      \text{sign}(\beta_1) & \text{if } \beta_1 \neq 0 \\\
+      [-1, 1] & \text{if } \beta_1 = 0
+    \end{cases}
+$$
+and $\gamma_2,...,\gamma_p$ are defined analogously.  
+
+---
+FOCs need to be defined at estimator, not true beta. Can consider simple case. Can interpret left hand side of FOC as the covariance between each xi and the residual. With Lasso we are therefore equating the covariance with the penalty (it's like equating marginal benefit with marginal cost). Contrast this with OLS where we are equating this covariance with 0. The marginal benefit is the reduction in estimation error that comes with including a non-zero coefficient. The marginal cost is the penalty or marginal testing cost. 
+
+This implies that some covariances will be between negative and positive lambda. We will drop those ones from the estimation. For these ones the penalty is too large relative to the covariance between the covariate and the residual. interesting that marginal benefit here is the covariance between the covariate and the residual. It's like saying that the covariate has to pick up enough of the residual to make it worth it. A different type of thinking. If we try to pin down the true model, we want the covariate to pick up none of the residual variation. 
+
+
+---
+
+If goal is prediction, then we are making an implicit assumption that the true model is "sparse". True model has fewer covariates than observations. How many fewer? $< a \sqrt{N}/\max\{N,p\}$. Can plot this function in R. Where does this function come from? Theory. We do not discuss details here. But we can plot it. 
+
+
+calculate_sparsity_bound <- function(p, N, alpha) {
+  return(alpha * sqrt(N) / sqrt(p))}#Define a function to calculate the sparsity bound
+
+N <- 100#Set parameters
+
+alpha <- 1000#Set parameters
+
+p_values <- seq(1, 100, by = 1)  ##Set parameters. Adjust the range of p as needed
+
+bound_values <- sapply(p_values, calculate_sparsity_bound, N = N, alpha = alpha)# Calculate sparsity bounds for each p
+
+kink_point <- which.min(diff(bound_values)) + 1# Identify the kink point
+
+plot(p_values, bound_values, type = "l", col = "blue", lwd = 2, 
+     xlab = "Number of Covariates (p)", ylab = "Sparsity Bound",
+     main = "Sparsity Bound vs. Number of Covariates",
+     ylim = c(0, max(bound_values)))# Plot the sparsity bounds
+
+points(p_values[kink_point], bound_values[kink_point], col = "red", pch = 16)# Highlight the kink point
+
+text(p_values[kink_point], bound_values[kink_point], "Kink", pos = 4, col = "red")# Highlight the kink point
+
+legend("topright", legend = sprintf("Alpha = %d", alpha), col = "blue", lwd = 2)# Add a legend
+
+
+---
+
+# Regularization and Complexity Penalty
+
+.pull-left[
+
+LASSO is a strong default. It screens variables automatically. It will set some of the coefficients equal to 0 by construction. 
+
+```{r, echo=FALSE, out.width = "80%", fig.align='center'}
+
+knitr::include_graphics("figs/LASSOScreening.png")
+
+```
+
+Minimum deviance is 1 (leftmost graph). Minimum penalty is 0 (middle). Their sum is 1 (right graph). 
+]
+
+.pull-right[
+
+Screening $\neq$ model selection. LASSO does not choose the model for you, in other words. Instead, it gives you a set of candidate models to choose from. 
+
+A *LASSO regularization path* would give you a set of $\widehat{\boldsymbol\beta}_1$, $\widehat{\boldsymbol\beta}_2$,..., $\widehat{\boldsymbol\beta}_T$ for a sequence of penalties $\lambda_1, \lambda_2, ..., \lambda_T$. 
+
+Given the sequence $\widehat{\boldsymbol\beta}_1$, $\widehat{\boldsymbol\beta}_2$,..., $\widehat{\boldsymbol\beta}_T$, can employ model selection (out of sample experiments) tools to choose the best $\widehat{\lambda}$. This is on the next slide. 
+
+
+]
+
+---
+
+ALGORITHM 6 (LASSO Regularization Path). 
+
+  1. Find the smallest $\lambda_1$ that makes $\widehat{\boldsymbol\beta_1}=0$ (all the $\beta_k$'s equal to 0 for this $\lambda_1$). Intuitively this $\lambda_1$ should be a relatively large number. 
+  2. Scale down $\lambda_1$. That is, set $\lambda_2 = \delta \lambda_1$ where $\delta$ is between 0 and 1. 
+  3. Find the $\widehat{\boldsymbol\beta_2}$ that solves $\min_{\boldsymbol\beta_2} \sum (y- \mathbf{x}'\boldsymbol\beta)^2 + \lambda_2 \sum_k |\beta_k|$
+  4. Go back to step 2 and repeat for $t$ in $3,4,...,T$. Obtain $\widehat{\boldsymbol\beta_3}, \widehat{\boldsymbol\beta_4}, ..., \widehat{\boldsymbol\beta_T}$
+
+Algo 6 is a version of forward stepwise algorithm. It is better. 
+  
+  * More stable. 
+  * Faster
+  
+Because estimates $\widehat{\boldsymbol\beta}$ do not change abruptly with small changes in $\lambda$. 
+
+---
+
+ALGORITHM 6 (LASSO Regularization Path) Example.
+```{r, echo=FALSE}
+install.packages("gamlr")
+library(gamlr)
+## Browsing History. 
+## web has 3 colums: [machine] id, site [id], [# of] visits
+web <- read.csv("C:/Users/aditc/OneDrive/Documents/browser-domains.csv")
+## Read in actual website names and relabel site factor
+sitenames <- scan("C:/Users/aditc/OneDrive/Documents/browser-sites.txt", what="character")
+web$site <- factor(web$site, levels=1:length(sitenames), labels=sitenames)
+## also factor machine id
+web$id <- factor(web$id, levels=1:length(unique(web$id)))
+## get total visits per-machine and % of time on each site
+## tapply(a,b,c) does c(a) for every level of factor b.
+machinetotals <- as.vector(tapply(web$visits,web$id,sum)) 
+visitpercent <- 100*web$visits/machinetotals[web$id]
+## use this info in a sparse matrix
+## this is something you'll be doing a lot; familiarize yourself.
+xweb <- sparseMatrix(
+	i=as.numeric(web$id), j=as.numeric(web$site), x=visitpercent,
+	dims=c(nlevels(web$id),nlevels(web$site)),
+	dimnames=list(id=levels(web$id), site=levels(web$site)))
+# what sites did household 1 visit? - print code below gives all the sites, some include atdmt.com, google.com and aol.com
+print(xweb[1, xweb[1,]!=0])
+## now read in the spending data 
+yspend <- read.csv("C:/Users/aditc/OneDrive/Documents/browser-totalspend.csv", row.names=1)  # us 1st column as row names
+yspend <- as.matrix(yspend) ## good practice to move from dataframe to matrix
+
+```
+
+```{r}
+## run a lasso path plot
+spender <- gamlr(xweb, log(yspend), verb=TRUE); spender
+```
+
+---
+
+```{r}
+plot(spender) ## path plot
+
+```
+---
+
+# K-fold Cross Validation for LASSO
+
+LASSO narrows set of all models to a subset of candidate models. 
+
+How do we select a model from these candidate models? Our selection criteria is based on predictive ability in unseen data. 
+
+How can we assess predictive ability without unseen data? We can run out-of-sample experiments via K-fold Cross Validation. 
+
+
+ALGORITHM 8 (K-fold CV LASSO).
+
+Obtain a path of candidate models $\widehat{\boldsymbol\beta_1}, \widehat{\boldsymbol\beta_2}, ..., \widehat{\boldsymbol\beta_T}$ for $\lambda_1, \lambda_2, ..., \lambda_T$ via ALGORITHM 6. 
+  
+  1. Partition data in $K$ folds.  
+  2. For each $k=1,...,K$, and for the same $\lambda_1, \lambda_2, ..., \lambda_T$, fit the LASSO path $\widehat{\boldsymbol\beta_1}^k, \widehat{\boldsymbol\beta_2}^k, ..., \widehat{\boldsymbol\beta_T}^k$ for each fold other than $k$.
+  3. For each $\widehat{\boldsymbol\beta_t}^k$, compute the deviance for the left out data: $-ln(P(y^k|\mathbf{x}'\widehat{\boldsymbol\beta_t}^k))$. Yields $K$ draws of out-of-sample deviance. One for each $\lambda_t$. 
+  4. Pick the $\hat\lambda$ with the lowest out of sample deviance. Pick the $\widehat{\boldsymbol\beta}$ that corresponds to $\hat\lambda$. Or refit the model using $\hat\lambda$.  
+
+---
+
+.pull-left[
+```{r}
+cv.spender <- cv.gamlr(xweb, log(yspend))
+plot(cv.spender)
+```
+]
+
+.pull-right[
+
+To pick $\hat\lambda$, 
+
+  1. compute fitted deviance over everyone $i$ in left-out data $e_t^k = -\frac{2}{n_k}\sum_{i\in fold_k }ln(P(y_i^k|\mathbf{x_i}'\widehat{\boldsymbol\beta_t}^k))$. 
+  
+  2. Then compute sample average deviance for each $\lambda_t$: $\bar{e}_t = \sum_k e_t^k$. 
+  
+  3. As well as its standard error $se(\bar{e}_t) = \sqrt{\frac{1}{K-1}\sum_k (e_t^k - \bar{e}_t)^2}$
+
+Intuition: 
+
+  * use errors in left-out data to approximate what predictive errors would be in future observations. Blue dots are left-out errors for different values of $\lambda$. 
+  * Note that standard errors are decreasing in $K$. Can have more folds if standard errors are too large. 
+
+]
+
+---
+
+# K-fold Cross Validation for LASSO
+
+Inspect selection at minimum (do this over and over. Do you get the same results? Why or why not?)
+
+```{r}
+betamin = coef(cv.spender, select="min"); betamin #From running this again and again I get the same results every time because there's only one possible minimum value here and the algorithm is capable of finding it every time I run it again and it will only change if the model (the Lasso regression) is changed, so the beta values below are local optima overall but global optima within this specific model in a sense 
+```
+betamin = coef(cv.spender, select="1se"); betamin
+---
+
+# Aikaike's Info Criterion 
+
+AIC is an alternative to cross validation for model selection:
+
+$AIC = deviance + 2df$
+
+where $df$ is model degrees of freedom. $df$ is number of parameters in your model (R reports $n-df$). More $df$ means more flexibility for fitting models to data. With LASSO, $df$ is number of non-zero slope coefficients at a particular $\lambda$. 
+
+AIC approximates the distances between a fitted model and the "truth". Can be used for model selection because lower AIC means you are closer to the "truth". 
+
+```{r}
+head(AIC(spender))
+```
+
+AIC tends to lead to overfitting. Cost of $df$ is not large enough. Can *correct* it such that 
+
+$AIC_c = deviance + 2df \frac{n}{n-df-1}$. 
+
+Like cross-validation experiments above, $AIC_c$ targets well the Out-of-Sample deviance: what the deviance would be on an independent sample of size $n$. $AIC_c$ can then be used as a substitute or in tandem with $CV-min$ we obtained from the experiments above. One advantage is that it is faster. 
+
+
+#Experiment
+aic_value <- AIC(spender)[1]  # First value of AIC (AIC for the full model)
+aicc_value <- aic_value + (2 * k * n) / (n - k - 1)
+print(aicc_value)
+---
+
+# References
+
+```{r, 'refs1', results='asis', echo=FALSE, eval=TRUE}
+PrintBibliography(bib, start = 1, end = 6)
+```
