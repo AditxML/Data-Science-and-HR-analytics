@@ -1,0 +1,31 @@
+Downloaded Rmarkdown file for lecture 4 with Professor Kapoor's code
+Changed file path for semiconductor.csv to the one from my own laptoop
+Learnt how to specify multiple possible values for the arguments of a function rather than just one using the c() function to create a VECTOR of 
+possible argument values eg. family=c("gaussian","binomial")
+Learnt how to use match.arg() function to give an error if input an incorrect argument into a function eg. fam <- match.arg(family)
+Learnt that have to use double equality in boolean statements to get a TRUE or FALSE outcome (needed for if conditions for eg.) eg. if(family=="gaussian")
+Learnt how to convert a categorical variable into 1 for success and 0 for otherwise using if(is.factor(y)) y <- as.numeric(y)>1
+Learnt that can call function A within function B by specifying appropriate arguments like how deviance function is called within R2 function
+Learnt how to perform cross validation 
+Learnt how to use rep()[sample(1:n)] to assign each observation to one of K folds and that can use sample() function to shift order of its argument 
+Altered code for deviance formula to change squared y_pred to absolute y_pred and interestingly this changed the value I get for colMeans(Out) despite never calling a Gaussian 
+family R2 - this may be because sometimes my code defaults to Gaussian family as an error or more plausibly because this is a random model so the random sampling element varies
+each time I run the code
+Altered code with K=1 and K=3 and K=5 and for K=1 the code did not even run as an error came up stating "Error in family$linkfun(mustart) : Argument mu must be a nonempty numeric vector"
+and for K=3 I got a more negative OOS R2 average of -18.6 and K=5 I got a more negative OOS R2 average of -18.7, so past some K threshold it seems like this average gets a lot closer to 0 / larger
+Learnt how to use boxplot() function to plot a boxplot of values
+Learnt how to run a forward stepwise regression algorithm 
+Learnt how to run a regression with only an intercept eg. null <- glm(FAIL~1, data=SC)
+Altered code to see what would happen if used different metric than AIC for stopping condition; used BIC instead and fwd_bic <- step(null, scope=formula(full), direction="forward", k=log(nrow(SC)))
+along with checking number of resultant variables length(coef(fwd_bic))
+Learnt that you can also load .txt files into R using scan(filepath, what = "character") function
+Learnt how to install packages eg. install.packages("gamlr")
+Loaded in rest of browsing history csv files
+Ran print(xweb[1, xweb[1,]!=0]) to get entire list of websites visited by household rather than head(...) to get just first 6
+Learnt that it is beneficial to convert dataframes into matrices for time efficiency as faster to do mathematical operations with matrices and for memory purposes
+Learnt how to use gamlr package to use cross validation to get lambda for estimating Lasso regression 
+Learnt how to use coef() function on more abstract models like cv.spender and how to use select argument of coef() function to get smallest coefficient of a model
+In getting lambdas for each website, changed select = "min" to select ="1se" which gives simplest model with cross-validation error within one standard error of its lowest possible value
+and could immediately see that lot less nonzero betas for 1se variant, as expected
+Learnt how to use AIC function to get AIC values of a model like AIC(spender) gives AIC of different iterations of K-fold CV LASSO algorithm 
+Added code to manually compute corrected AIC for first iteration of K-fold CV LASSO algorithm, AICc of 13315.91 vs AIC of 13309.89, not a very big difference here  
