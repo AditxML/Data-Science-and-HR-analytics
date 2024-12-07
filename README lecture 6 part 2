@@ -1,0 +1,45 @@
+Downloaded Rmarkdown file for Lecture 6 part 2 with Professor Kapoor's code
+Changed file paths for abortion and cellphone datasets to being the correct ones from my laptop
+AER was not loaded in yet so library(AER) code was giving error so added install.packages("AER") before that 
+Learnt how to conduct orthogonal ML for LTE algorithm as more general alternative to sample splitting that also gives standard errors of treatment effect
+Learnt how to use rep.int() function in combination with ceiling() and sample.int() funtions to create a vector of IDS to randomly assign each observation to one of the number
+of specified folds
+Learnt how to use vcovHC() function to get variance covariance matrix with heteroskedastic-consistent variances of argument where argument is a linear model's regression results
+Ran orthoLTE function call and p-value computation many times to note that everytime it gave a different answer and there was quite large variation in the p-value results going 
+up to 0.8 (certainly not significant) to 0.08 (significant at 10% significance level). Highlights how sensitive these results are to the data in the folds
+As a result, when I add code to compute the p-value of the effect of abortion rates on crime with nfold = 10, multiple times, the p-value seems to be not only higher on average
+but also varies less. This makes sense since as number of folds increase one would expect the training-test split sensitivity of computed statistics (here p-value) to decrease
+as the fold on which the model to test is fitted (i.e. the test set fold) gets smaller and smaller and the training set gets larger and larger (more data to train should
+increase test set performance in theory)
+Loaded in OHIE datasets using correct file paths from my laptop
+Learnt how to use all(x==y) function to check if all elements in x are same as all corresponding elements in y 
+Learnt how to use null assignment to remove a column from a dataframe eg. X$num19_12m <- NULL
+Learnt how to use tapply() function to get meand and variance of y for each value of binary or categorical variable x
+Learnt how to use table() function to get counts of values from specific column in a dataframe eg. ybar <- nsel <- table(P[,c("selected")])
+Had to change code to work around R being unable to source naref.R and naref(X$edu_12m) not working so applied naref to X first and then did levels(X$edu_12m) to get same output
+as needed
+Learnt how to use sapply() function to get a vector of classes of a dataframe and how to use that along with %in% operator and c() function to subset dataframe to only those 
+columns that are of a certain class eg. xnum <- X[,sapply(X,class)%in%c("numeric","integer")]
+Learnt how to use colSums(is.na()) function to count missing values in each column of a dataframe/etc.
+Learnt how to flag missing values as 1 and nonmissing as 0 in a dataframe/etc. using eg. xnumna <- apply(is.na(xnum), 2, as.numeric)
+Learnt how to create a function that imputes the values of a dataframe using a prespecified condition that it each checks on a per column basis 
+Changed the na.rm  argument in imputation function to = FALSE so the mean imputation doesn't ignore NAs to see how it handles them but no differences
+suggesting no such NA values in the considered variables here. 
+Changed the if condition to be more restrictive with setting imputed values to 0 namely, increasing threshold from 0.5 (or 50%) to 0.8 but this also didn't make a difference in
+imputed value computations
+Changed the apply function argument for columns (2) to for rows (1) to observe effect and noticed that this gave a completely different output and actually swapped the rows
+and columns around as noted by then running dim(xnum)
+Learnt how to rename columns of a matrix by adjusting column names from another matrix using colnames() and paste() functions
+Learnt how to use sort() function to sort list or vector in ascending and descending order
+Learnt how to load .rda files into R using load() function
+Added install.packages('tm',dependencies = TRUE) because text mining package wasn't installed yet so had to do so before loading it in
+Learnt how to parse textual data in R using text mining package and DocumentTermMatrix(Corpus(VectorSource(as.character(textualdatacolumn)))) functions 
+Learnt how to do matrix multiplication using %*% operator
+Learnt how to create a better model for determing price elasticty of demand of a product by incorporating the product's textual data which is a relevant control here and  
+also how to incorporate interaction effects between relevant textual data and log price of product as controls in HTE models for estimating price elasticity of demand
+
+
+
+
+
+ 
