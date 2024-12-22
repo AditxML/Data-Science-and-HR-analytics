@@ -9,7 +9,7 @@ Learnt how to create a dataframe using data.frame() function with arguments bein
 Added code to create a nearest10 and nearest20 algorithm as well to note that at times nearest10 and nearest20 algorithms give different answers and this taught me that a test 
 set size of 10 doesn't mean using the distance of one test observation from the other 9 to classify this test observation but the distances from the test observation and the 
 204 training observations (as expected)
-Removed source("naref.R") below library(gamlr) cos naref already part of gamlr package which is loaded in and R didn't recognize source("naref.R"), but got correct output for 
+Removed source("naref.R") below library(gamlr) because naref is already part of gamlr package which is loaded in and R didn't recognize source("naref.R"), but got correct output for 
 the sparse model matrix after removing it 
 Learnt that .^2 eg. in credx <- sparse.model.matrix(Default ~ . ^ 2, data=naref(credit)) sets independent variables to be all columns in data along with all pairwise interaction 
 effects and squared variables
